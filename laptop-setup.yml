@@ -1,0 +1,27 @@
+## Playbook to set up my Unix environment on Desktop Computers
+# First time set up:
+# 1. Install OS
+# 2. Log in
+# 3. Run: wget -O- erde.ly/ak | $SHELL (or ftp -MV -o- http://erde.ly/ak | $SHELL)
+# 4. On Ubuntu, run: sudo apt install -y openssh-server
+#
+# On Ansible system, run:
+#  ANSIBLE_SSH_ARGS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+#     ansible-playbook linux-laptop.yml -e target=ansible-ubuntu --ask-vault-pass
+#
+# Future runs can skip the ANSIBLE_SSH_ARGS stuff with:
+#  ansible-playbook linux-laptop.yml -e target=ansible-ubuntu --ask-vault-pass
+
+---
+- hosts: "{{ target | default('localhost') }}"
+  gather_facts: true
+
+  roles:
+    - role: handlers
+    - role: become
+    - role: configfiles
+    - role: sshserver
+    - role: sshclient
+    - role: unix_system
+    - role: unix_desktop
+    - role: gnome_desktop

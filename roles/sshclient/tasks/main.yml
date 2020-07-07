@@ -1,0 +1,64 @@
+# sshclient tasks
+---
+- include_role: name=handlers
+  when: handlers_role_imported is not defined
+
+- name: make sure ~/.ssh exists
+  file:
+    path: '~/.ssh'
+    state: 'directory'
+    mode: '0700'
+
+- name: install personal ssh keys
+  copy:
+    content: '{{ item.key }}'
+    dest: '{{ item.file }}'
+    mode: |
+      {{ item.mode[ansible_os_family] | default(item.mode["all"]) |
+        default((item.file | splitext | last == ".pub") | ternary("0644", "0600")) }}
+    owner: '{{ item.owner[ansible_os_family] | default(item.owner["all"]) | default(omit) }}'
+    group: '{{ item.group[ansible_os_family] | default(item.group["all"]) | default(omit) }}'
+  with_items: '{{ user_ssh_keys | default([]) }}'
+  no_log: true
+  tags: 'sshkeys'
+
+- name: install custom files
+  include_tasks: _custom_files.yml
+  with_items: '{{ sshclient_custom_files | default([]) }}'
+  tags: 'customfiles'
+
+- name: install custom includes
+  include_tasks: _custom_includes.yml
+  with_items: '{{ sshclient_custom_includes | default([]) }}'
+  tags: 'customincludes'
+
+- name: install custom settings
+  include_tasks: _custom_settings.yml
+  with_items: '{{ sshclient_custom_settings | default([]) }}'
+  tags: 'customsettings'
+
+- name: get ssh localhost host public key from /etc/ssh
+  slurp:
+    src: '/etc/ssh/ssh_host_ed25519_key.pub'
+  changed_when: false
+  register: result
+
+- name: add localhost host key to known_hosts
+  lineinfile:
+    path: '~/.ssh/known_hosts'
+    regexp: '^(127.0.0.1|localhost|localhost,127.0.0.1|127.0.0.1,localhost) '
+    line: "localhost,127.0.0.1 {{ result.content | b64decode | regex_replace('\\r?\\n', '') }}"
+    state: present
+    create: true
+
+- name: add cron job to delete ssh control files at reboot
+  cron:
+    name: 'Delete ssh control files at reboot'
+    special_time: 'reboot'
+    job: 'rm -f ~/.ssh/ctl-*'
+
+- name: add cron job to delete ssh auth sock links at reboot
+  cron:
+    name: 'Delete ssh auth sock links at reboot'
+    special_time: 'reboot'
+    job: 'rm -f ~/.ssh/ssh-auth-sock'

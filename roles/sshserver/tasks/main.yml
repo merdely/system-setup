@@ -1,0 +1,46 @@
+# sshserver tasks
+---
+- include_role: name=handlers
+  when: handlers_role_imported is not defined
+
+- name: define ssh_host_keys as a fact
+  set_fact:
+    ssh_host_keys: '{{ ssh_host_keys }}'
+
+- name: ensure sshd server is enabled and started
+  service:
+    name: 'sshd'
+    state: 'started'
+    enabled: true
+  become: true
+
+- name: install ssh host keys
+  copy:
+    content: '{{ item.key }}'
+    dest: '{{ item.file }}'
+    mode: |
+      {{ item.mode[ansible_os_family] | default(item.mode["all"]) |
+        default((item.file | splitext | last == ".pub") | ternary("0644", "0600")) }}
+    owner: '{{ item.owner[ansible_os_family] | default(item.owner["all"]) | default("0") }}'
+    group: '{{ item.group[ansible_os_family] | default(item.group["all"]) | default("0") }}'
+  with_items: '{{ ssh_host_keys[inventory_hostname] | default([]) }}'
+  become: true
+  no_log: true
+  notify: restart sshd
+  register: result
+  tags: 'sshkeys'
+
+- name: install custom files
+  include_tasks: _custom_files.yml
+  with_items: '{{ sshserver_custom_files | default([]) }}'
+  tags: 'customfiles'
+
+- name: install custom includes
+  include_tasks: _custom_includes.yml
+  with_items: '{{ sshserver_custom_includes | default([]) }}'
+  tags: 'customincludes'
+
+- name: install custom settings
+  include_tasks: _custom_settings.yml
+  with_items: '{{ sshserver_custom_settings | default([]) }}'
+  tags: 'customsettings'

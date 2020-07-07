@@ -1,0 +1,233 @@
+# gnome_desktop tasks
+---
+- include_role: name=handlers
+  when: handlers_role_imported is not defined
+
+- name: print gnome packages needed for installation
+  debug:
+    msg: |
+      {{ gnome_pkgs_install['common'] | default([])
+         | union(gnome_pkgs_install[ansible_system] | default([]))
+         | union(gnome_pkgs_install[ansible_os_family] | default([]))
+      }}
+  when: |
+    gnome_pkgs_install['common'] | default([])
+    | union(gnome_pkgs_install[ansible_system] | default([]))
+    | union(gnome_pkgs_install[ansible_os_family] | default([])) | length > 0
+
+- name: install gnome packages needed for installation
+  package:
+    name: |
+      {{ gnome_pkgs_install['common'] | default([])
+         | union(gnome_pkgs_install[ansible_system] | default([]))
+         | union(gnome_pkgs_install[ansible_os_family] | default([]))
+      }}
+    state: 'present'
+  become: true
+  delay: 10
+  register: result
+  retries: 20
+  until: result is not failed
+  when: |
+    gnome_pkgs_install['common'] | default([])
+    | union(gnome_pkgs_install['ansible_system'] | default([]))
+    | union(gnome_pkgs_install['ansible_os_family'] | default([])) | length > 0
+
+- name: set packages list
+  set_fact:
+    packages_to_install: |
+      {{ packages_to_install | default([])
+         | union(gnome_packages['common'] | default([]))
+         | union(gnome_packages['ansible_system'] | default([]))
+         | union(gnome_packages['ansible_os_family'] | default([]))
+      }}
+  changed_when: true
+  notify:
+    - update apt cache
+    - update dnf cache
+    - print packages_to_install
+    - install packages
+  tags: 'packages'
+
+- name: install custom files
+  include_tasks: _custom_files.yml
+  with_items: '{{ gnome_custom_files | default([]) }}'
+  tags: 'customfiles'
+
+- name: install custom includes
+  include_tasks: _custom_includes.yml
+  with_items: '{{ gnome_custom_includes | default([]) }}'
+  tags: 'customincludes'
+
+- name: install custom settings
+  include_tasks: _custom_settings.yml
+  with_items: '{{ gnome_custom_settings | default([]) }}'
+  tags: 'customsettings'
+
+- name: add custom repos
+  include_tasks: _custom_repos.yml
+  with_items: '{{ gnome_custom_repos | default([]) }}'
+  tags: 'customrepos'
+
+- name: add users to groups
+  include_tasks: _custom_groups.yml
+  with_items: '{{ gnome_custom_groups | default([]) }}'
+  tags: 'customgroups'
+
+- name: enable/start services
+  include_tasks: _custom_services.yml
+  with_items: '{{ gnome_custom_services | default([]) }}'
+  tags: 'customservices'
+
+- name: install custom deb files
+  include_tasks: _custom_deb_files.yml
+  with_items: '{{ gnome_custom_deb_files | default([]) }}'
+  tags: 'debfiles'
+
+- name: 'ensure {{ item }} exists'
+  file:
+    path: '{{ item }}'
+    state: 'directory'
+    mode: '0755'
+  with_items:
+    - '~/bin'
+    - '~/.config/autostart'
+  tags:
+    - 'gse'
+    - 'gnome_settings'
+
+- name: create autostart files for programs
+  copy:
+    content: |
+      [Desktop Entry]
+      Name={{ item.name | mandatory }}
+      Comment={{ item.comment | default(item.name) }}
+      Icon={{ item.comment | default(item.name) | expanduser }}
+      Exec={{ item.exec | mandatory | expanduser }}
+      Terminal={{ item.termain | default('false') }}
+      Type=Application
+      NoDisplay={{ item.termain | default('false') }}
+      X-GNOME-Autostart-enabled=true
+    dest: '~/.config/autostart/{{ item.name | mandatory | regex_replace(" ", "") }}.desktop'
+  with_items: "{{ autostart_files }}"
+  tags: 'autostarts'
+  when: 'ansible_os_family in item.os_family|default([ansible_os_family])'
+
+- name: create script to save dbus address info
+  copy:
+    content: |
+      #!/bin/sh
+      echo "DISPLAY=$DISPLAY DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" > ~/.cache/.dbusaddress
+    dest: '~/bin/save_dbus_address_info'
+    mode: '0755'
+  tags:
+    - 'gse'
+    - 'gnome_settings'
+
+- name: create autostart file for save_dbus_address_info
+  copy:
+    content: |
+      [Desktop Entry]
+      Name=save_dbus_address_info
+      Comment=Save DBUS Address Info
+      Icon=gnome-monitor
+      Exec={{ '~' | expanduser }}/bin/save_dbus_address_info
+      Terminal=false
+      Type=Application
+      NoDisplay=true
+      X-GNOME-Autostart-enabled=true
+    dest: '~/.config/autostart/save_dbus_address_info.desktop'
+  tags:
+    - 'gse'
+    - 'gnome_settings'
+
+- name: determine if user is logged into gnome
+  command: 'pgrep -u {{ ansible_user_id }} -lf gnome-session-binary'
+  changed_when: false
+  failed_when: false
+  register: result
+  tags:
+    - 'gse'
+    - 'gnome_settings'
+
+- name: determine if dbus address info file exists
+  stat:
+    path: '~/.cache/.dbusaddress'
+  register: dbusready
+  tags:
+    - 'gse'
+    - 'gnome_settings'
+
+- name: pause for user to (re-)log into gnome
+  pause:
+    prompt: 'Log into Gnome so the script can continue (if previously logged in, log out and back in)'
+  when: result.rc == 1 or (not dbusready.stat.exists and ansible_system == 'OpenBSD')
+  tags:
+    - 'gse'
+    - 'gnome_settings'
+
+- name: 'disable gse {{ item.name }}'
+  include_tasks: _disable_gse.yml
+  with_items: '{{ gnome_shell_extensions | default([]) | selectattr("disabled", "defined") | list }}'
+  tags: 'gse'
+
+- name: 'install gse {{ item.name }}'
+  include_tasks: _install_gse.yml
+  with_items: '{{ gnome_shell_extensions | default([]) | selectattr("github", "defined") | list }}'
+  tags: 'gse'
+
+- name: get list of gnome and snap-store snaps  # noqa 306
+  shell: 'snap list | awk "\$1~/(gnome-[0-9]|gtk-common-themes|snap-store)/{print \$1}"'
+  register: deb_remove_snaps
+  changed_when: deb_remove_snaps.stdout != ''  # noqa 602
+  notify:
+    - abort snap auto-refresh
+    - remove snaps
+  tags: 'snaps'
+  when: ansible_os_family == 'Debian'
+
+- name: handle gdm settings for debian and redhat
+  block:
+    - name: create directory for gdm in dconf db
+      file:
+        path: '/etc/dconf/profile'
+        state: 'directory'
+        owner: 'root'
+        group: 'root'
+        mode: '0755'
+      become: true
+
+    - name: set gdm to show login field instead of a list
+      copy:
+        content: |
+          user-db:user
+          system-db:gdm
+          file-db:/usr/share/gdm/greeter-dconf-defaults
+        dest: '/etc/dconf/profile/gdm'
+      become: true
+      notify: run dconf update
+
+    - name: create directory for gdm in dconf db
+      file:
+        path: '/etc/dconf/db/gdm.d'
+        state: 'directory'
+        owner: 'root'
+        group: 'root'
+        mode: '0755'
+      become: true
+
+    - name: set gnome login screen to prompt for username
+      ini_file:
+        dest: '/etc/dconf/db/gdm.d/00-login-screen'
+        section: 'org/gnome/login-screen'
+        option: 'disable-user-list'
+        value: 'true'
+        state: 'present'
+        create: true
+      become: true
+      notify: run dconf update
+  when: ansible_system == 'Linux'
+
+- name: include gnome settings tasks file
+  include_tasks: gnome_settings.yml
+  tags: 'gnome_settings'

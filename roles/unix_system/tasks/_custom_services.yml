@@ -1,0 +1,11 @@
+---
+- name: '_custom_services : enable/start {{ item.name }} service'
+  service:
+    name: '{{ item.name }}'
+    state: 'started'
+    enabled: true
+  become: true
+  tags: 'customservices'
+  when:
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'

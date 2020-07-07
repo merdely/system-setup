@@ -1,0 +1,25 @@
+---
+- name: '_install_custom_certs : copy {{ item.dest }}'
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ ca_certification_dest[ansible_os_family] }}/{{ item.dest }}'
+  become: true
+  notify: update ca certificates
+  when: item.type == 'file'
+  tags: ['cacert']
+
+- block:
+    - name: '_install_custom_certs : download {{ item.dest }}'
+      get_url:
+        url: '{{ item.src }}'
+        dest: '{{ ca_certification_dest[ansible_os_family] }}/{{ item.dest }}'
+      become: true
+      notify: update ca certificates
+  rescue:
+    - name: '_install_custom_certs : log that downloading custom certificate failed'
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["download " + item.dest + " certificate"]) }}'
+      changed_when: true
+      notify: list failed tasks
+  when: item.type == 'web'
+  tags: ['cacert']

@@ -1,0 +1,13 @@
+---
+## Uncomment the next two lines if vars/main.yml is an encrypted vault.
+# ignore: |
+#   vars/main.yml
+
+extends: default
+
+rules:
+  ## Uncomment the following line to use "var: yes/no" in yaml files.
+  # truthy: disable
+  line-length:
+    max: 120
+    level: warning

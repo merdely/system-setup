@@ -1,0 +1,52 @@
+---
+- name: 'check to see if gse {{ item.name }} is already installed'
+  stat:
+    path: '~/.local/share/gnome-shell/extensions/{{ item.uuid }}'
+  register: gse
+  tags: 'gse'
+
+- name: 'install the gse {{ item.name }} if not installed'
+  block:
+    - name: create directory for gse
+      file:
+        path: '~/.local/share/gnome-shell/extensions/{{ item.uuid }}'
+        state: 'directory'
+
+    - name: create temporary checkout directory
+      tempfile:
+        state: 'directory'
+      register: checkout
+
+    - name: 'download gse {{ item.name }}'
+      git:
+        repo: 'https://github.com/{{ item.github }}'
+        dest: '{{ checkout.path }}'
+        version: 'master'
+      register: result
+
+    - name: 'copy gse {{ item.name }}'
+      copy:
+        src: '{{ checkout.path }}/'
+        dest: '~/.local/share/gnome-shell/extensions/{{ item.uuid }}'
+        remote_src: true
+      when: not result.failed
+
+    - name: 'enable {{ item.name }} gse'
+      shell: 'env $(cat ~/.cache/.dbusaddress) gnome-extensions enable {{ item.uuid }}'
+      notify:
+        - restart gnome window manager
+        - remember to reboot
+
+    - name: clean up temporary checkout directory
+      file:
+        path: '{{ checkout.path }}'
+        state: 'absent'
+  rescue:
+    - name: 'log that gse {{ item.name }} install failed'
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["gse {{ item.name }} install"]) }}'
+      changed_when: true
+      notify: list failed tasks
+  tags: 'gse'
+  when:
+    - not gse.stat.exists

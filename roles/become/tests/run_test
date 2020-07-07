@@ -1,0 +1,4 @@
+#!/bin/sh
+
+test_dir="$(dirname "$0")"
+ansible-playbook --ask-vault-pass -i $test_dir/inventory $test_dir/test.yml

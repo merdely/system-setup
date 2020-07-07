@@ -1,0 +1,18 @@
+#!/bin/sh
+
+old_pwd=$(pwd)
+cd "$(dirname "$0")"
+role_dir=$(dirname $(pwd -P))
+
+cd $role_dir
+
+echo "Running yamllint on $(basename "$role_dir")"
+yamllint .
+
+echo ""
+echo "Running ansible-lint on $(basename "$role_dir")"
+ansible-lint -v "$role_dir"
+[ -r "$role_dir/tests/test.yml" ] && ansible-lint -v "$role_dir/tests/test.yml"
+ansible-lint -v "$role_dir/utilities/setup_become_vault.yml"
+
+cd $old_pwd

@@ -1,0 +1,46 @@
+---
+- name: 'linux : add {{ dns_search_domain }} to dns search domains'
+  ini_file:
+    dest: '/etc/systemd/resolved.conf'
+    section: 'Resolve'
+    option: 'Domains'
+    value: '{{ dns_search_domain }}'
+    state: 'present'
+    create: true
+  become: true
+  notify: restart systemd-resolved
+  when:
+    - dns_search_domain is defined
+    - ansible_os_family == 'Debian'
+  tags: ['dnssearch']
+
+- name: 'linux : add {{ dns_search_domain }} to dns search domains'
+  copy:
+    content: |
+      #!/bin/sh
+      [ -z "$1" -o "$1" = "none" ] && exit
+      dg=$(route -n | awk 'BEGIN{m=9999} $1=="0.0.0.0"{if($5<m){m=$5;dg=$2}} END{print dg}')
+
+      # To skip adding the domain under conditions
+      {{ dns_search_exception | default('# [ "$var" = "condition" ] && unset dg && exit') }}
+
+      my_domains="{{ dns_search_domain }}"
+      domain_list=$(nmcli | grep -E "^[[:space:]]+domains:" | sed -r 's/^\s+domains:\s+(.*)\s*$/\1/')
+      if [ -n "$domain_list" ]; then
+        domain_list="$my_domains $domain_list"
+      else
+        domain_list="$my_domains"
+      fi
+      echo "Setting domain list for $1 to '$domain_list'"
+      nmcli dev mod $1 ipv4.dns-search "$domain_list"
+      unset domain_list my_domains
+    dest: '/etc/NetworkManager/dispatcher.d/ifup-local'
+    mode: '0755'
+    owner: '0'
+    group: '0'
+  become: true
+  notify: run ifup-local on default nic
+  when:
+    - dns_search_domain is defined
+    - ansible_os_family == 'RedHat'
+  tags: ['dnssearch']

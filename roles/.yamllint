@@ -1,0 +1,13 @@
+---
+ignore: |
+  become/vars/main.yml
+  sshclient/vars/main.yml
+  sshserver/vars/main.yml
+
+extends: default
+
+rules:
+  # truthy: disable
+  line-length:
+    max: 120
+    level: warning

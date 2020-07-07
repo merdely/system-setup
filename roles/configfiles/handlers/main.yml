@@ -1,0 +1,13 @@
+# configfiles handlers
+#
+# These handlers are meant to override handlers defined in task files copied from other roles
+#
+---
+- name: no op handler
+  meta: noop
+  changed_when: false
+  delegate_to: 'localhost'
+  failed_when: false
+  listen:
+    - list failed tasks
+    - restart sshd

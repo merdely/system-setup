@@ -1,0 +1,49 @@
+---
+- name: '_custom_settings : check if {{ item.dest_d }} exists'
+  stat:
+    path: '{{ item.dest_d | dirname }}'
+  become: '{{ item.become | default(omit) }}'
+  register: dest_d
+  when:
+    - item.dest_d is defined
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'
+  tags: 'customsettings'
+
+- name: '_custom_settings : add "{{ item.line }}" in {{ item.dest_d }}'
+  copy:
+    content: '{{ item.line }}'
+    dest: '{{ item.dest_d }}'
+    owner: '{{ item.owner | default(omit) }}'
+    group: '{{ item.group | default(omit) }}'
+    mode: '{{ item.mode | default(omit) }}'
+    backup: '{{ item.backup | default(omit) }}'
+  become: '{{ item.become | default(omit) }}'
+  notify: restart sshd
+  when:
+    - item.dest_d is defined
+    - dest_d.stat.exists and dest_d.stat.isdir
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'
+  tags: 'customsettings'
+
+- name: '_custom_settings : add "{{ item.line }}" in {{ item.dest_f }}'
+  lineinfile:
+    path: '{{ item.dest_f }}'
+    line: '{{ item.line }}'
+    owner: '{{ item.owner | default(omit) }}'
+    group: '{{ item.group | default(omit) }}'
+    mode: '{{ item.mode | default(omit) }}'
+    regexp: '{{ item.regexp | default(omit) }}'
+    backrefs: '{{ item.backrefs | default(omit) }}'
+    insertafter: '{{ item.insertafter | default(omit) }}'
+    insertbefore: '{{ item.insertbefore | default(omit) }}'
+    state: '{{ item.state | default(omit) }}'
+    backup: '{{ item.backup | default(omit) }}'
+  become: '{{ item.become | default(omit) }}'
+  notify: restart sshd
+  when:
+    - item.dest_d is not defined or not dest_d.stat.exists or not dest_d.stat.isdir
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'
+  tags: 'customsettings'

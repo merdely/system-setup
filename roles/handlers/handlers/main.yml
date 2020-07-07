@@ -1,0 +1,320 @@
+# 'handlers' handlers
+#
+# This role should be included in other roles and handlers for those roles should be defined here.
+# Include them with "include_role: name=handlers" in the tasks/main.yml file.
+---
+- name: test handler
+  debug:
+    msg: "handlers' test handler triggered"
+
+- name: for installed config files with 'callfrom' defined, add to the bottom of the 'callfrom' file
+  debug:
+    var: user_config_files_results
+  tags: '[configs]'
+
+- block:
+    - name: update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: '{{ apt_cache_valid_time | default("3600") }}'
+      become: true
+      delay: 10
+      listen: 'update package cache'
+      register: result
+      retries: 20
+      until: result is not failed
+      when: ansible_os_family == 'Debian'
+  rescue:
+    - name: log that updating the apt cache failed
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["update apt cache"]) }}'
+      changed_when: true
+      notify: list failed tasks
+
+- block:
+    - name: update dnf cache
+      dnf:
+        update_cache: true
+      become: true
+      delay: 10
+      listen: 'update package cache'
+      register: result
+      retries: 20
+      until: result is not failed
+      when: ansible_os_family == 'RedHat'
+  rescue:
+    - name: log that updating the dnf cache failed
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["update dns cache"]) }}'
+      changed_when: true
+      notify: list failed tasks
+
+- name: abort snap auto-refresh
+  command: 'snap abort --last auto-refresh'
+  become: true
+  changed_when: false
+  delay: 10
+  failed_when: false
+  register: result
+  retries: 20
+  until: result is not failed
+  when: ansible_system == 'Linux'
+
+- name: remove snaps
+  snap:
+    name: '{{ deb_remove_snaps.stdout_lines }}'
+    state: 'absent'
+  become: true
+  delay: 10
+  register: result
+  retries: 20
+  until: result is not failed
+  when: ansible_system == 'Linux'
+
+- name: fix ssh host private key permissions on redhat
+  file:
+    path: '/etc/ssh/ssh_host_{{ item.file }}_key'
+    group: 'ssh_keys'
+    mode: '0640'
+  with_items: '{{ ssh_host_keys[inventory_hostname] }}'
+  become: true
+  no_log: true
+  notify: restart sshd
+  when:
+    - ssh_host_keys[inventory_hostname] is defined
+    - ansible_os_family == 'RedHat'
+
+- name: run ca update command on linux
+  command: '{{ ca_update_command[ansible_os_family] }}'
+  become: true
+  listen: update ca certificates
+  when: ansible_system == 'Linux'
+
+- name: get ca cert summary on openbsd
+  shell: >
+    openssl x509 -in {{ ca_certification_dest[ansible_os_family] }}/{{ item['dest'] }}
+    -text -certopt no_issuer,no_pubkey,no_sigdump -sha1 -fingerprint -noout ; openssl x509
+    -in {{ ca_certification_dest[ansible_os_family] }}/{{ item['dest'] }} -sha256 -fingerprint
+  with_items: '{{ custom_ssl_certs }}'
+  changed_when: true
+  listen: update ca certificates
+  notify: add ca cert to cert.pem
+  register: result
+  when: ansible_os_family == 'OpenBSD'
+
+- name: add ca cert to cert.pem
+  blockinfile:
+    path: '{{ ca_certification_dest[ansible_os_family] }}/cert.pem'
+    marker: '# {mark} Ansible CA cert'
+    marker_begin: 'Begin'
+    marker_end: 'End'
+    insertafter: 'EOF'
+    block: '{{ item.stdout }}'
+  with_items: '{{ result.results }}'
+  become: true
+  no_log: true
+  when: ansible_os_family == 'OpenBSD'
+
+- name: renew dhcp
+  shell: "sh /etc/netstart $(ifconfig egress | awk '/^[^[:space:]]/ { print substr($1,1,length($1)-1) }')"
+  become: true
+  when: ansible_os_family == 'OpenBSD'
+
+- name: run ifup-local on default nic
+  shell: >
+    /etc/NetworkManager/dispatcher.d/ifup-local
+    $(route | awk 'BEGIN{m=9999} $1=="default"{if($5<m){m=$5;i=$8}} END{print i}')
+  become: true
+  when: ansible_os_family == 'RedHat'
+
+- name: restart systemd-resolved
+  service:
+    name: 'systemd-resolved'
+    state: 'restarted'
+  become: true
+  when: ansible_os_family == 'Debian'
+
+- name: create autostart file for xscreensaver
+  copy:
+    content: |
+      [Desktop Entry]
+      Name=Screensaver
+      Comment=xscreensaver
+      Icon=xscreensaver
+      Exec=xscreensaver -no-splash
+      Terminal=false
+      Type=Application
+      NoDisplay=true
+      X-GNOME-Autostart-enabled=true
+    dest: '~/.config/autostart/xscreensaver.desktop'
+  when: ansible_os_family == 'OpenBSD'
+
+- name: create autostart file for monitor-screensaver
+  copy:
+    content: |
+      [Desktop Entry]
+      Name=Monitor Screensaver
+      Comment=Monitor for screen lock and forget SSH keys
+      Icon=gnome-monitor
+      Exec={{ home.stdout }}/bin/monitor-screensaver
+      Terminal=false
+      Type=Application
+      NoDisplay=true
+      X-GNOME-Autostart-enabled=true
+    dest: '~/.config/autostart/monitor-screensaver.desktop'
+
+- name: run dconf update
+  command: 'dconf update'
+  become: true
+
+# - name: restart gnome window manager (disabled)
+#   command: 'env DISPLAY=:0 gnome-shell -r'
+
+- name: restart gnome window manager
+  command: 'killall -3 gnome-shell'
+  when: ansible_os_family == 'Debian'
+
+- name: install discord files
+  file:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    state: 'link'
+  with_items:
+    - {src: '/usr/share/discord/Discord', dest: '/usr/bin/discord'}
+    - {src: '/usr/share/discord/discord.desktop', dest: '/usr/share/applications/discord.desktop'}
+    - {src: '/usr/share/discord/discord.png', dest: '/usr/share/pixmaps/discord.png'}
+  become: true
+  notify: set discord permissions
+
+- name: set discord permissions
+  file:
+    path: "/usr/share/discord/{{ item }}"
+    mode: '0755'
+  with_items:
+    - Discord
+    - chrome-sandbox
+    - postinst.sh
+  become: true
+
+- name: enable yum repos
+  ini_file:
+    dest: "/etc/yum.repos.d/{{ item }}.repo"
+    section: "{{ item }}"
+    option: 'enabled'
+    value: '1'
+    no_extra_spaces: true
+  with_items: '{{ repos_to_enable | default([]) }}'
+  become: true
+  when: ansible_os_family == 'RedHat'
+
+- block:
+    - name: install system patches
+      command: 'syspatch'
+      become: true
+      notify: remember to reboot
+      when: ansible_os_family == 'OpenBSD'
+  rescue:
+    - name: log that installing system patches failed
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["install system patches (syspatch)"]) }}'
+      changed_when: true
+      notify: list failed tasks
+
+- block:
+    - name: update packages
+      package:
+        name: '*'
+        state: 'latest'  # noqa 403
+      become: true
+      delay: 10
+      notify:
+        - remove unneeded apt package depencencies
+        - disable yum repos
+        - remember to reboot
+      register: result
+      retries: 20
+      until: result is not failed
+  rescue:
+    - name: log that updating packages failed
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["update packages"]) }}'
+      changed_when: true
+      notify: list failed tasks
+
+- name: print packages_to_install
+  debug:
+    msg: '{{ packages_to_install }}'
+
+- block:
+    - name: install packages
+      package:
+        name: '{{ packages_to_install }}'
+        state: 'latest'  # noqa 403
+      become: true
+      delay: 10
+      notify:
+        - disable yum repos
+        - remember to reboot
+      register: result
+      retries: 20
+      until: result is not failed
+      when: packages_to_install is defined
+  rescue:
+    - name: log that installing packages failed
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["install packages"]) }}'
+      changed_when: true
+      notify: list failed tasks
+
+- name: remove unneeded apt package depencencies
+  apt:
+    autoremove: true
+  become: true
+  when: ansible_os_family == 'Debian'
+
+- name: disable yum repos
+  ini_file:
+    dest: '/etc/yum.repos.d/{{ item }}.repo'
+    section: '{{ item }}'
+    option: 'enabled'
+    value: '0'
+  with_items: '{{ repos_to_disable | default([]) }}'
+  become: true
+  when: ansible_os_family == 'RedHat'
+
+- name: set up virtualization
+  service:
+    name: 'libvirtd'
+    state: 'started'
+    enabled: true
+  become: true
+  when: ansible_os_family == 'RedHat'
+
+- name: add user to groups for virtualization
+  user:
+    name: '{{ ansible_user_id }}'
+    groups: 'kvm,qemu,libvirt'
+    append: true
+  become: true
+  when: ansible_os_family == 'RedHat'
+
+- name: ensure ntp is enabled and started
+  service:
+    name: 'ntp'
+    state: 'started'
+    enabled: true
+  become: true
+
+- name: restart sshd
+  service:
+    name: 'sshd'
+    state: 'restarted'
+  become: true
+
+- name: list failed tasks
+  debug:
+    msg: '{{ task_failures|default([]) }}'
+
+- name: remember to reboot
+  debug:
+    msg: 'Remember to reboot'

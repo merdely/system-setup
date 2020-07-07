@@ -1,0 +1,7 @@
+---
+- hosts: "{{ target | default('configs') }}"
+  gather_facts: "{{ gf | default('true') }}"
+
+  roles:
+    - become
+    - configfiles

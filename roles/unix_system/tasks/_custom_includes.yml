@@ -1,0 +1,21 @@
+---
+- name: '_custom_includes : add custom lines to custom files'
+  lineinfile:
+    path: '{{ item.path | mandatory }}'
+    line: '{{ item.line | mandatory }}'
+    regexp: '{{ item.regexp | default("^" + item.line) }}'
+    backrefs: '{{ item.backrefs | default(omit) }}'
+    insertafter: '{{ item.insertafter | default(omit) }}'
+    insertbefore: '{{ item.insertbefore | default(omit) }}'
+    owner: '{{ item.owner | default(omit) }}'
+    group: '{{ item.group | default(omit) }}'
+    mode: '{{ item.dirmode | default(omit) }}'
+    backup: '{{ item.backup | default(omit) }}'
+    create: '{{ item.create | default("false") }}'
+  become: '{{ item.become | default(omit) }}'
+  failed_when: result.rc is defined and ( result.rc not in [ 0, 257 ] )
+  register: result
+  tags: 'customfiles'
+  when:
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'

@@ -1,0 +1,8 @@
+# sshserver handlers
+#
+# Don't put handlers in this file. Put handlers in handlers/main.yml in the
+# 'handlers' role and include the 'handlers' role in this role by uncommenting
+#     # - include_role: name=handlers"
+#     #   when: handlers_role_import is not defined
+# in this role's tasks/main.yml.
+---

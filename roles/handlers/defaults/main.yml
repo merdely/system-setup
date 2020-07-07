@@ -1,0 +1,13 @@
+# handlers defaults
+#
+## Changes should not be made to this file. They should be made in vars/main.yml.
+#
+---
+## This sets a global variable so that if included in more than one role,
+## it will only be included once.
+handlers_role_imported: true
+
+## Debian and RedHat use different commands to update their CA databases
+ca_update_command:
+  Debian: 'update-ca-certificates'
+  RedHat: 'update-ca-trust'

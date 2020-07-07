@@ -1,0 +1,17 @@
+---
+ignore: |
+  roles/become/vars/main.yml
+  roles/sshclient/vars/main.yml
+  roles/sshserver/vars/main.yml
+  test
+  test_setup.yml
+  foo.yml
+  mwe.yml
+
+extends: default
+
+rules:
+  # truthy: disable
+  line-length:
+    max: 120
+    level: warning

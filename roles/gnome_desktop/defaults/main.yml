@@ -1,0 +1,229 @@
+# gnome_desktop defaults
+#
+## Changes should not be made to this file. They should be made in vars/main.yml.
+#
+# The multi-value settings (array) have to be set as variables and then passed through
+# the gnome_settings{,_openbsd}_list with:
+#   "[{{ variable | join(', ') | string }}]" or else the quoting is broken
+---
+## Window Manager
+## If window_manager is set up the unix_desktop role, it will override this setting.
+## Comment out window_manager variable in unix_desktop/{defaults,vars}/main.yml to use Gnome (or set there).
+## This setting is used in the unix_desktop role's tasks/OpenBSD.yml
+window_manager: 'gnome-session'
+
+## Custom configuration options
+## *_custom_files is a list of files that can be installed from the ansible server or a web site
+# - type: can be 'file' or 'web'
+# - src: path to file on ansible server or a URL
+# - dest: the destination on the target system
+# - mode: permissions on the destination file
+# - owner/group: ownership of the destination file
+# - dirmode: the permissions on any directories created in the destination file path
+# - become: if elevated access is required to write the file
+# - os_family: a list of ansible_os_family values for which the file pertains
+# - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+#
+# desktop_custom_files:
+#   - {type: 'web', src: 'https://yoursite.com/yourfile.txt', dest: '~/.yourfile', os_family: ['OpenBSD']}
+gnome_custom_files: []
+
+## *_custom_includes is a list of files that can be installed from the ansible server or a web site
+# - path: path to file on the target system to modify
+# - line: line to add/change
+# - regexp: regular expression to use when looking for a line to change
+# - backrefs: whether to enable use of backreferences in line to matches in regexp (e.g. '\1 new text \2')
+# - insertafter: a line to insert 'line' after if regexp does not match (default: EOF)
+# - insertbefore: a line to insert 'line' before if regexp does not match and insertafter is not set (e.g. BOF)
+# - mode: permissions on the destination file
+# - owner/group: ownership of the destination file
+# - create: should the file be created if it does not exist (default: false)
+# - backup: whether to make a backup of the unchanged file (default: false)
+# - become: if elevated access is required to write the file
+# - os_family: a list of ansible_os_family values for which the include pertains
+# - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+#
+# desktop_custom_includes:
+#   - {path: '~/.profile', line: '[ -r ~/.profile.local ] && . ~/.profile.local'}
+gnome_custom_includes: []
+
+## *_custom_settings is a list settings to add either to foo.conf or foo.conf.d/some-file.conf
+# - dest_d: a destination file to be created/overwritten with a configuration option (e.g. /etc/foo.conf.d/1-foo.conf)
+# - dest_f: a configuration file to modify with a configuration option
+# - line: configuration line to change/add
+# - regexp: regular expression to use when looking for a line to change
+# - backrefs: whether to enable use of backreferences in line to matches in regexp (e.g. '\1 new text \2')
+# - insertafter: a line to insert 'line' after if regexp does not match (default: EOF)
+# - insertbefore: a line to insert 'line' before if regexp does not match and insertafter is not set (e.g. BOF)
+# - mode: permissions on the destination file
+# - owner/group: ownership of the destination file
+# - dirmode: the permissions on any directories created in the destination file path
+# - backup: whether to make a backup of the unchanged file (default: false)
+# - become: if elevated access is required to write the file
+# - os_family: a list of ansible_os_family values for which the setting pertains
+# - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+#
+# desktop_custom_settings:
+#   - {dest_d: '/etc/ssh/sshd_config.d/10-permit-root.conf', line: 'PermitRootLogin prohibit-password'}
+gnome_custom_settings: []
+
+## *_custom_repos is a list of repos that can be added to Debian-based and RedHat-based systems
+# - name: the name of the repo
+# - keyurl: URL to an Apt key (required if keyserver/keyid not defined)
+# - keyserver: An Apt key server to use (required if keyurl not defined)
+# - keyid: An Apt key ID (required if keyurl not defined)
+# - debrepo: An Apt repo URL (either web page or ppa)
+# - filename: A filename to store in /etc/apt/sources.list.d or /etc/yum.repos.d
+# - reporpm: A path to an RPM file containing REPO information (may be a URL)
+# - gpgkey: A path to a GPG key to use for the Yum repo (may be a URL)
+# - yumrepo: A Yum repo URL
+# - gpgcheck: Should the GPG key be checked for this repo (default: true)
+# - metadata_expire: Time interval that the cached metadata for the Yum repo expires
+# - enableyumrepos: A list of repos to enable before packages are installed/updated from it
+# - disableyumrepos: A list of repos to disable after packages are installed/updated from it
+# - packages: A list of packages to be added to the list of packages to install
+# - become: if elevated access is required to add the repos (default: true)
+# - os_family: a list of ansible_os_family values for which the repo pertains
+# - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+#
+# desktop_custom_repos:
+#   - {name: 'google-chrome', keyurl: 'https://dl.g...', gpgkey: 'https://dl.g...', yumrepo: 'http://dl...',
+#      filename: 'google-chrome', packages: ['google-chrome-stable']}
+gnome_custom_repos: []
+
+## *_custom_groups is a list of groups to add a user to
+# - name: User to add to groups
+# - groups: Groups to add 'name' user to
+# - append: Append the user to the groups or overwrite user's group membership with this list (default: false)
+# - become: if elevated access is required modify groups (default: true)
+# - os_family: a list of ansible_os_family values for which the file pertains
+# - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+#
+# desktop_custom_groups:
+#   - {name: '{{ ansible_user_id }}', groups: 'operator', os_family: ['OpenBSD']}
+gnome_custom_groups: []
+
+## *_custom_services is a list of services to enable/start
+# - name: Name of the service to enable/start
+# - os_family: a list of ansible_os_family values for which the service pertains
+# - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+gnome_custom_services: []
+
+## *_custom_deb_files is a list of Debian packages to install (may be a URL)
+gnome_custom_deb_files: []
+
+## autostart_files is a list of startup icons to create that go in ~/.config/autostart
+# - name: name of the startup icon
+# - exec: command to run
+# - icon: path to an icon (defaults to an icon with 'name')
+# - terminal: whether to open a terminal window for this program (defaults to false)
+# - os_family: a list of ansible_os_family values for which the autostart file pertains
+# - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# autostart_files:
+#   - {name: 'myprogram', exec: '~/bin/myprog', icon: '~/Pictures/myprog.png'}
+
+## For the package lists:
+## - common: installed no matter what OS
+## - OpenBSD: installed when ansible_os_family == "OpenBSD"
+## - Linux: installed when ansible_system == "Linux"
+## - Debian: installed when ansible_os_family == "Debian"
+## - RedHat: installed when ansible_os_family == "RedHat"
+
+## Packages needed for this role to succeed
+## Do not make changes to this file; copy the list to vars/main.yml and change there.
+gnome_pkgs_install:
+  common:
+    - 'git'
+  OpenBSD:
+    - 'gnome-keyring'
+    - 'gnome-session'
+    - 'gnome-shell-extensions'
+    - 'gnome-terminal'
+    - 'gvfs-google'
+    - 'tracker-miners'
+  Linux: []
+  Debian: []
+  RedHat: []
+
+## Packages to install (not needed for the role to succeed)
+## Do not make changes to this file; copy the list to vars/main.yml and change there.
+gnome_packages:
+  common: []
+  OpenBSD: []
+  Linux: []
+  Debian: []
+  RedHat: []
+
+## Apps to add to the Dock
+# favorite_apps:
+#   Linux: ['''org.gnome.Nautilus.desktop''', '''google-chrome.desktop''', '''org.gnome.Terminal.desktop''',
+#           '''org.gnome.Software.desktop''', '''update-manager.desktop''']
+#   OpenBSD: ['''org.gnome.Nautilus.desktop''', '''chromium-browser.desktop''', '''org.gnome.Terminal.desktop''']
+
+## Apps to remove from the Dock
+# except_favapps: ['org.gnome.Calendar.desktop', 'rhythmbox.desktop', 'org.gnome.Photos.desktop', 'yelp.desktop']
+
+## For OpenBSD, custom keybindings are stored here.
+## It's an array, so we need to define it as a variable
+openbsd_custkey: ['''/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/''']
+
+## For custom keyboard options, it's an array, so define here
+# xcb_options: ['''caps:super''']
+
+## These settings are for Gnome
+# gnome_settings_list:
+#   - {path: '/org/gnome/desktop/background', key: 'picture-uri', value: ''''''}
+#   - {path: '/org/gnome/desktop/background', key: 'primary-color', value: '''dimgrey'''}
+#   - {path: '/org/gnome/desktop/input-sources', key: 'xkb-options',
+#      value: "[{{ xcb_options | join (', ') | string }}]"}
+#   - {path: '/org/gnome/desktop/interface', key: 'clock-format', value: '''12h'''}
+#   - {path: '/org/gnome/desktop/interface', key: 'clock-show-weekday', value: 'true'}
+#   - {path: '/org/gnome/desktop/peripherals/touchpad', key: 'natural-scroll', value: 'false'}
+#   - {path: '/org/gnome/desktop/screensaver', key: 'picture-uri', value: ''''''}
+#   - {path: '/org/gnome/desktop/screensaver', key: 'primary-color', value: '''dimgrey'''}
+#   - {path: '/org/gnome/desktop/session', key: 'idle-delay', value: 'uint32 900'}
+#   - {path: '/org/gnome/mutter', key: 'auto-maximize', value: 'false'}
+#   - {path: '/org/gnome/shell', key: 'favorite-apps', value: "[{{ favlist | join(', ') | string }}]"}
+#   - {path: '/org/gnome/shell/extensions/dash-to-dock', key: 'dash-max-icon-size', value: '24'}
+#   - {path: '/org/gnome/shell/extensions/dash-to-dock', key: 'dock-fixed', value: 'false'}
+#   - {path: '/org/gnome/shell/extensions/dash-to-dock', key: 'intellihide', value: 'true'}
+#   - {path: '/org/gnome/shell/extensions/desktop-icons', key: 'show-home', value: 'false'}
+#   - {path: '/org/gnome/shell/extensions/desktop-icons', key: 'show-trash', value: 'false'}
+
+## These settings are for Gnome Terminal
+# gnome_terminal_settings_list:
+#   - {path: '/org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}',
+#      key: 'use-system-font', value: 'false',
+#      skip: '{{ using_sys_font.stdout|regex_replace("^$", "true")|bool | ternary("false", "true") }}'}
+#   - {path: '/org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}',
+#      key: 'use-theme-colors', value: 'false',
+#      skip: '{{ using_theme_colors.stdout|regex_replace("^$", "true")|bool | ternary("false", "true") }}'}
+#   - {path: '/org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}',
+#      key: 'font', value: '''Monospace 9''',
+#      skip: '{{ using_sys_font.stdout|regex_replace("^$", "true")|bool | ternary("false", "true") }}'}
+#   - {path: '/org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}',
+#      key: 'background-color', value: '''black''',
+#      skip: '{{ using_theme_colors.stdout|regex_replace("^$", "true")|bool | ternary("false", "true") }}'}
+#   - {path: '/org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}',
+#      key: 'foreground-color', value: '''white''',
+#      skip: '{{ using_theme_colors.stdout|regex_replace("^$", "true")|bool | ternary("false", "true") }}'}
+#   - {path: '/org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}',
+#      key: 'default-size-columns', value: '200', min: 80}
+#   - {path: '/org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}',
+#      key: 'default-size-rows', value: '50', min: 24}
+#   - {path: '/org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}',
+#      key: 'login-shell', value: 'true'}
+#   - {path: '/org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}',
+#      key: 'visible-name', value: '''Terminal'''}
+
+## These settings only pertain to OpenBSD
+# gnome_settings_openbsd_list:
+#   - {path: '/org/gnome/settings-daemon/plugins/media-keys', key: 'screensaver', value: '@as []'}
+#   - {path: '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0',
+#      key: 'binding', value: '''<Super>l'''}
+#   - {path: '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0',
+#      key: 'command', value: '''xscreensaver-command -lock'''}
+#   - {path: '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0',
+#      key: 'name', value: '''Lock Screen'''}
+#   - {path: '/org/gnome/settings-daemon/plugins/media-keys',
+#      key: 'custom-keybindings', value: "[{{ openbsd_custkey | join(', ') | string }}]"}

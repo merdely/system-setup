@@ -1,0 +1,91 @@
+# This playbook creates a encrypted 'become' password vault from the inventory
+# (looking for all password_type variables).
+# It will not overwrite an existing vars/main.yml file
+---
+- hosts: '{{ target | default("carme") }}'
+  gather_facts: false
+
+  vars_prompt:
+    - name: new_vault_password
+      prompt: "Enter the password for the new become vault"
+      private: true
+      confirm: true
+
+  vars:
+    temppath: '/tmp'
+    vault_file: '../vars/main.yml'
+
+  tasks:
+    - name: check if the become password vault file already exists
+      stat:
+        path: '{{ playbook_dir }}/{{ vault_file }}'
+      register: result
+
+    - name: fail if the become password vault file exists
+      fail:
+        msg: 'The become password fault file already exists'
+      when: result.stat.exists
+
+    - name: set list of password types from inventory
+      set_fact:
+        password_types: >
+          {{ password_types | default([]) | union([ hostvars[item]["password_type"] | default("default") ]) }}
+      with_items: '{{ hostvars | default[{"password_type": "default"}] }}'
+
+    - include_tasks: '_password_prompt.yml'
+      with_items: '{{ password_types | default([]) | unique | list }}'
+
+    - name: save test variables to a dict
+      set_fact:
+        test_variables: '{{ test_variables | default({}) | combine({ item: "this is the " + item + " variable" }) }}'
+      with_items: "{{ password_types | default([]) | unique | list }}"
+
+    - name: 'determine if /run/user/{{ ansible_user_id }} exists'
+      stat:
+        path: '/run/user/{{ ansible_user_id }}'
+      register: result
+
+    - name: "use user's /run/user directory for temporary files"
+      set_fact:
+        temppath: '{{ result.stat.path }}'
+      when: result.stat.exists and result.stat.isdir
+
+    - name: create temporary file for the new vault
+      tempfile:
+        state: 'directory'
+        path: '{{ temppath }}'
+      register: tempdir
+
+    - name: write variables to a new vault temporary file
+      copy:
+        content: |
+          ---
+          become_passwords:
+          {{ become_passwords | default([]) | to_nice_yaml | indent(width=2, first=true) }}
+          test_variables:
+          {{ test_variables | default([]) | to_nice_yaml | indent(width=2, first=true) | regex_replace('\\n$', '') }}
+        dest: '{{ tempdir.path }}/vfile'
+        mode: '0600'
+      no_log: true
+
+    - name: write new vault password to temporary file for encryption
+      copy:
+        content: '{{ new_vault_password }}'
+        dest: '{{ tempdir.path }}/vpass'
+        mode: '0600'
+      no_log: true
+
+    - name: encrypt the new vault
+      command: 'ansible-vault encrypt --vault-password-file {{ tempdir.path }}/vpass {{ tempdir.path }}/vfile'
+      changed_when: false
+
+    - name: save new encrypted vault file
+      copy:
+        src: '{{ tempdir.path }}/vfile'
+        dest: '{{ playbook_dir }}/{{ vault_file }}'
+        decrypt: false
+
+    - name: delete temporary files
+      file:
+        path: '{{ tempdir.path }}'
+        state: 'absent'

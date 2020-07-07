@@ -1,0 +1,43 @@
+---
+- block:
+    - name: "_install_discord_redhat : create temporary download directory for discord"
+      tempfile:
+        state: 'directory'
+      changed_when: false
+      register: download
+
+    - name: '_install_discord_redhat : download discord'
+      unarchive:
+        src: 'https://discordapp.com/api/download?platform=linux&format=tar.gz'
+        dest: '{{ download.path }}'
+        remote_src: true
+      changed_when: false
+      register: result
+
+    - name: '_install_discord_redhat : ensure directory for discord exists'
+      file:
+        path: '/usr/share/discord'
+        state: 'directory'
+      become: true
+
+    - name: '_install_discord_redhat : copy discord files to /usr/share'
+      copy:
+        src: '{{ download.path }}/Discord/'
+        dest: '/usr/share/discord/'
+        remote_src: true
+      become: true
+      notify: install discord files
+      when: not result.failed
+  rescue:
+    - name: '_install_discord_redhat : log that discord failed'
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["download discord"]) }}'
+      changed_when: true
+      notify: list failed tasks
+  always:
+    - name: '_install_discord_redhat : remove temporary download directory for discord'
+      file:
+        path: '{{ download.path }}'
+        state: 'absent'
+      changed_when: false
+  when: ansible_os_family == 'RedHat'

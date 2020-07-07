@@ -1,0 +1,21 @@
+# become defaults
+#
+## Changes should not be made to this file. They should be made in vars/main.yml.
+#
+# become_passwords contains a list of password_type defitions of passwords
+# It's worth setting another variable with the password_type definitions
+# to be able to test reading from the vault.
+---
+ansible_become_password: '{{ become_passwords[password_type] }}'
+
+## A list of passwords
+# become_passwords:
+#   default: 'p@$$w0rd'
+#   server1: 'password1'
+#   dmzserver: 'password2'
+
+## A list of test strings
+# test_variables:
+#   default: 'this is the default variable'
+#   server1: 'this is the server1 variable'
+#   dmzserver: 'this is the dmzserver variable'

@@ -1,0 +1,23 @@
+# handlers meta
+---
+dependencies: []
+
+galaxy_info:
+  role_name: 'handlers'
+  author: 'Michael Erdely'
+  description: 'Load handlers for all roles'
+  license: 'license (BSD, MIT)'
+  min_ansible_version: 2.9
+  platforms:
+    - name: 'GenericUNIX'
+      versions:
+        - 'all'
+        - 'any'
+    - name: 'GenericBSD'
+      versions:
+        - 'all'
+        - 'any'
+    - name: 'GenericLinux'
+      versions:
+        - 'all'
+        - 'any'

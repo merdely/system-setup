@@ -1,0 +1,57 @@
+# This is a helper playbook to be included in the gnome_settings tasks/main.yml.
+# It sets several gnome dconf/gsettings settings read from vars/main.yml
+---
+- name: 'gnome_settings : get default terminal profile'  # noqa 306
+  shell: >
+    env $(cat ~/.cache/.dbusaddress) gsettings get org.gnome.Terminal.ProfilesList default
+    | sed -r "s/^'(.*)'\$/\1/"
+  changed_when: false
+  register: termprofile
+  tags: 'gnome_settings'
+
+- name: 'gnome_settings : get favorite-apps dconf setting'
+  shell: 'env $(cat ~/.cache/.dbusaddress) gsettings get org.gnome.shell favorite-apps'
+  changed_when: false
+  register: result
+  tags: 'gnome_settings'
+
+- name: 'gnome_settings : build new favorite-apps list from existing apps'
+  set_fact:
+    favlist: "{{ favlist | default([]) | union([\"'\" + item + \"'\"]) }}"
+  with_items: '{{ result.stdout }}'
+  when: 'item not in except_favapps|default([])'
+  changed_when: false
+  tags: 'gnome_settings'
+
+- name: 'gnome_settings : add additional apps from our list'
+  set_fact:
+    favlist: "{{ favlist | union(favorite_apps[ansible_system]) }}"
+  changed_when: false
+  tags: 'gnome_settings'
+
+- name: 'gnome_settings : read if terminal is using system-font'
+  shell: >
+    env $(cat ~/.cache/.dbusaddress) dconf read
+    /org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}/use-system-font
+  changed_when: false
+  register: using_sys_font
+  tags: 'gnome_settings'
+
+- name: 'gnome_settings : read if terminal is using system-theme'
+  shell: >
+    env $(cat ~/.cache/.dbusaddress) dconf read
+    /org/gnome/terminal/legacy/profiles:/:{{ termprofile.stdout }}/use-theme-colors
+  changed_when: false
+  register: using_theme_colors
+  tags: 'gnome_settings'
+
+- name: 'gnome_settings : set dconf settings'
+  include_tasks: 'dconf_command.yml'
+  with_items: '{{ gnome_settings_list | default([]) | union(gnome_terminal_settings_list | default([])) }}'
+  tags: 'gnome_settings'
+
+- name: 'gnome_settings : set dconf settings for openbsd'
+  include_tasks: 'dconf_command.yml'
+  with_items: '{{ gnome_settings_openbsd_list | default([]) }}'
+  tags: 'gnome_settings'
+  when: ansible_system == 'OpenBSD'

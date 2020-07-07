@@ -1,0 +1,3 @@
+[local_hosts]
+hostfailure ansible_host=localhost ansible_connection=local password_type=bad_password_type
+hostsuccess ansible_host=localhost ansible_connection=local password_type=default

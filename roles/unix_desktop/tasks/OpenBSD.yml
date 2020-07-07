@@ -1,0 +1,36 @@
+---
+- name: 'openbsd : read system xinitrc'
+  slurp:
+    path: '/etc/X11/xinit/xinitrc'
+  register: result
+  tags: 'xconfigs'
+
+- name: 'openbsd : create ~/.xinitrc'
+  copy:
+    content: |
+      {{ result.content | b64decode
+      | regex_replace('(ssh-add < /dev/null|xclock|xconsole|xterm -geometry)', '# \1')
+      | regex_replace('fvwm \|\| xterm', '# fvwm || xterm') }}
+      export LC_ALL=en_US.UTF-8 XDG_SESSION_TYPE=x11 GDK_BACKEND=x11
+      if [ -x $(which ck-launch-session 2> /dev/null) ]; then
+        exec ck-launch-session {{ window_manager | default('fvwm') }}
+      else
+        exec {{ window_manager | default('fvwm') }}
+      fi
+    dest: '~/.xinitrc'
+    mode: '0644'
+  tags: 'xconfigs'
+
+- name: 'openbsd : create ~/.xsession'
+  copy:
+    content: |
+      export LC_ALL=en_US.UTF-8 XDG_SESSION_TYPE=x11 GDK_BACKEND=x11
+      [ -r $HOME/.Xresources ] && xrdb -merge $HOME/.Xresources
+      if [ -x $(which ck-launch-session 2> /dev/null) ]; then
+        exec ck-launch-session {{ window_manager | default('fvwm') }}
+      else
+        exec {{ window_manager | default('fvwm') }}
+      fi
+    dest: '~/.xsession'
+    mode: 0644
+  tags: 'xconfigs'

@@ -1,0 +1,103 @@
+# unix_desktop tasks
+---
+- include_role: name=handlers
+  when: handlers_role_imported is not defined
+  tags: 'always'
+
+- name: print desktop packages needed for installation
+  debug:
+    msg: |
+      {{ desktop_pkgs_install['common'] | default([])
+         | union(desktop_pkgs_install[ansible_system] | default([]))
+         | union(desktop_pkgs_install[ansible_os_family] | default([]))
+      }}
+  when: |
+    desktop_pkgs_install['common'] | default([])
+    | union(desktop_pkgs_install[ansible_system] | default([]))
+    | union(desktop_pkgs_install[ansible_os_family] | default([])) | length > 0
+
+- name: install packages needed for installation
+  package:
+    name: |
+      {{ desktop_pkgs_install['common'] | default([])
+         | union(desktop_pkgs_install[ansible_system] | default([]))
+         | union(desktop_pkgs_install[ansible_os_family] | default([]))
+      }}
+    state: 'present'
+  become: true
+  delay: 10
+  register: result
+  retries: 20
+  until: result is not failed
+  when: |
+    desktop_pkgs_install['common'] | default([])
+    | union(desktop_pkgs_install[ansible_system] | default([]))
+    | union(desktop_pkgs_install[ansible_os_family] | default([])) | length > 0
+
+- name: set desktop packages list
+  set_fact:
+    packages_to_install: |
+      {{ packages_to_install | default([])
+         | union(desktop_packages['common'] | default([]))
+         | union(desktop_packages[ansible_system] | default([]))
+         | union(desktop_packages[ansible_os_family] | default([]))
+      }}
+  changed_when: true
+  notify:
+    - update package cache
+    - print packages_to_install
+    - install packages
+    - set up virtualization
+    - add user to groups for virtualization
+  tags: 'packages'
+
+- name: install custom files
+  include_tasks: _custom_files.yml
+  with_items: '{{ desktop_custom_files | default([]) }}'
+  tags: 'customfiles'
+
+- name: install custom includes
+  include_tasks: _custom_includes.yml
+  with_items: '{{ desktop_custom_includes | default([]) }}'
+  tags: 'customincludes'
+
+- name: install custom_settings
+  include_tasks: _custom_settings.yml
+  with_items: '{{ desktop_custom_settings | default([]) }}'
+  tags: 'customsettings'
+
+- name: add custom repos
+  include_tasks: _custom_repos.yml
+  with_items: '{{ desktop_custom_repos | default([]) }}'
+  tags: 'customrepos'
+
+- name: add users to groups
+  include_tasks: _custom_groups.yml
+  with_items: '{{ desktop_custom_groups | default([]) }}'
+  tags: 'customgroups'
+
+- name: enable/start services
+  include_tasks: _custom_services.yml
+  with_items: '{{ desktop_custom_services | default([]) }}'
+  tags: 'customservices'
+
+- name: install custom deb files
+  include_tasks: _custom_deb_files.yml
+  with_items: '{{ desktop_custom_deb_files | default([]) }}'
+  tags: 'debfiles'
+
+- name: configure custom xresources settings
+  lineinfile:
+    path: '~/.Xresources'
+    regexp: '^{{ item.setting }}:'
+    line: '{{ item.setting }}: {{ item.value }}'
+    create: true
+  with_items: "{{ xdefaults_settings | default([]) }}"
+  tags: 'xresources'
+
+- include_tasks: '_install_discord_RedHat.yml'
+  when: ansible_os_family == 'RedHat'
+
+- name: 'include_tasks : {{ ansible_system }}.yml'
+  include_tasks: '{{ ansible_system }}.yml'
+  tags: ['onenote', 'libreoffice', 'xconfigs']

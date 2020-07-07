@@ -1,0 +1,93 @@
+---
+- name: 'linux : remove libreoffice'
+  package:
+    name:
+      - 'libreoffice-*'
+      - 'libreoffice'
+      - 'thunderbird-*'
+      - 'thunderbird'
+    state: 'absent'
+  become: true
+  tags: 'libreoffice'
+
+- block:
+    - name: 'linux : get p3x-onenote downloads file'
+      uri:
+        url: 'https://api.github.com/repos/patrikx3/onenote/releases/latest'
+        return_content: true
+      register: result
+
+    - name: 'linux : make sure ~/bin exists'
+      file:
+        path: '~/bin'
+        state: 'directory'
+        mode: '0755'
+
+    - name: 'linux : download p3x-onenote'
+      get_url:
+        url: >
+          {{ result.json.assets | selectattr('name','match','P3X-OneNote-'+result.json.name+'.AppImage')
+          | map(attribute='browser_download_url') | list | first }}
+        dest: '~/bin/'
+        mode: '0755'
+      register: result2
+
+    - name: 'linux : create onenote wrapper script'
+      copy:
+        content: |
+          #!/bin/sh
+          $(/bin/ls -1v ~/bin/P3X-OneNote-*.AppImage|tail -n1)
+        dest: '~/bin/onenote'
+        mode: '0755'
+
+    - name: 'linux : make sure ~/pictures exists'
+      file:
+        path: '~/Pictures'
+        state: 'directory'
+        mode: 0755
+
+    - name: 'linux : download onenote icon'
+      get_url:
+        url: 'https://github.com/patrikx3/onenote/raw/master/src/electron/images/256x256.png'
+        dest: '~/Pictures/onenote.png'
+        mode: '0644'
+
+    - name: 'linux : make sure ~/.local/share/applications exists'
+      file:
+        path: '~/.local/share/applications'
+        state: 'directory'
+        mode: '0755'
+
+    - name: 'linux : set home variable'
+      command: 'echo $HOME'
+      changed_when: false
+      register: home
+
+    - name: 'linux : create desktop icon for onenote'
+      copy:
+        content: |
+          [Desktop Entry]
+          Name=Microsoft OneNote
+          Exec={{ home.stdout }}/bin/onenote
+          Icon={{ home.stdout }}/Pictures/onenote.png
+          Terminal=false
+          Type=Application
+          StartupNotify=true
+        dest: '~/.local/share/applications/OneNote.desktop'
+  rescue:
+    - name: 'linux : print output for downloading onenote file list'
+      debug:
+        var: result
+      when: result
+
+    - name: 'linux : print output for downloading onenote'
+      debug:
+        var: result2
+      when: result2
+
+    - name: 'linux : log that onenote install failed'
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["install onenote"]) }}'
+      changed_when: true
+      notify: list failed tasks
+  tags: 'onenote'

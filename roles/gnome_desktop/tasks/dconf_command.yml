@@ -1,0 +1,27 @@
+# This is a helper playbook to be included in gnome_settings.yml.
+# It uses the dconf command to set dconf/gnome settings.
+# This is the only helper function for this purpose that currently works:
+# - It respects the DBUS_SESSION_BUS_ADDRESS variable
+# - It will write a dconf setting even if gnome isn't aware of it
+# - It's idempotent by reading first and writing only if it changes
+---
+- name: 'dconf_command : get {{ item.key }} dconf setting'
+  shell: 'env $(cat ~/.cache/.dbusaddress) dconf read {{ item.path }}/{{ item.key }}'
+  changed_when: false
+  register: result
+  tags: 'gnome_settings'
+
+- block:
+    - name: 'dconf_command : set {{ item.key }} dconf setting to "{{ item.value }}"'
+      shell: 'env $(cat ~/.cache/.dbusaddress) dconf write {{ item.path }}/{{ item.key }} "{{ item.value }}"'
+  rescue:
+    - name: 'dconf_command : log that writing dconf settings failed'
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["setting " + item.path + "/" + item.key ]) }}'
+      changed_when: true
+      notify: list failed tasks
+  tags: 'gnome_settings'
+  when:
+    - result.stdout|string != item.value|string
+    - item.min is not defined or result.stdout|int <= item.min|int
+    - item.skip is not defined or item.skip|string != 'true'

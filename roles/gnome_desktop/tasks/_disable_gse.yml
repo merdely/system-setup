@@ -1,0 +1,16 @@
+---
+- name: 'get state of {{ item.name }} gse'  # noqa 306
+  shell: >
+    env $(cat ~/.cache/.dbusaddress) gnome-extensions info {{ item.uuid }}
+    | /usr/bin/awk "\$1 == \"State:\" { print \$2 }"
+  changed_when: false
+  register: result
+  tags: gse
+  when: item.disabled
+
+- name: 'disable {{ item.name }} gse'
+  shell: 'env $(cat ~/.cache/.dbusaddress) gnome-extensions disable {{ item.uuid }}'
+  when:
+    - item.disabled
+    - result.stdout == 'ENABLED'
+  tags: gse
