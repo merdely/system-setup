@@ -1,12 +1,14 @@
 ---
-- name: '_custom_deb_files : install custom deb files'
+- name: '_custom_deb_files : install custom deb file: {{ item }}'
   apt:
     deb: '{{ item }}'
   become: true
   delay: 10
+  notify: '{{ custom_handlers | default([]) }}'
   register: result
   retries: 20
   until: result is not failed
   when:
     - ansible_os_family == 'Debian'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'

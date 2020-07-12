@@ -14,6 +14,9 @@
           delay: 10
           register: result
           retries: 20
+          tags:
+            - 'packages'
+            - 'updates'
           until: result is not failed
       rescue:
         - name: log update apt cache failure
@@ -38,6 +41,7 @@
          | union(system_pkgs_install[ansible_system] | default([]))
          | union(system_pkgs_install[ansible_os_family] | default([]))
       }}
+  tags: 'packages'
   when: |
     system_pkgs_install['common'] | default([])
     | union(system_pkgs_install[ansible_system] | default([]))
@@ -55,87 +59,92 @@
   delay: 10
   register: result
   retries: 20
+  tags: 'packages'
   until: result is not failed
   when: |
     system_pkgs_install['common'] | default([])
     | union(system_pkgs_install[ansible_system] | default([]))
     | union(system_pkgs_install[ansible_os_family] | default([])) | length > 0
 
-- name: add common packages to install list
-  set_fact:
-    packages_to_install: |
-      {{ packages_to_install | default([])
-         | union(system_packages['common'] | default([]))
-         | union(system_packages[ansible_system] | default([]))
-         | union(system_packages[ansible_os_family] | default([]))
-      }}
-  changed_when: true
-  notify:
-    - update apt cache
-    - update dnf cache
-    - print packages_to_install
-    - install packages
-  tags: 'packages'
+- name: determine if there are updates to install
+  include_role:
+    name: utilities
+    tasks_from: _check_for_updates
+  tags:
+    - 'packages'
+    - 'syspatch'
+    - 'updates'
 
-- name: determine if there are debian package updates  # noqa 306
-  shell: 'apt-get -s upgrade | grep -qE "^[1-9][0-9]* upgraded"'
-  args:
-    warn: false
-  changed_when: result.rc == 0
-  failed_when: false
-  notify: update packages
-  register: result
-  when: ansible_os_family == 'Debian'
+- name: add packages to custom install list
+  include_role:
+    name: utilities
+    tasks_from: _custom_add_packages.yml
+  with_items: '{{ system_custom_add_packages | default([]) }}'
+  tags:
+    - 'packages'
+    - 'addpackages'
 
-- name: determine if there are redhat package updates  # noqa 306
-  shell: 'dnf list --updates | grep -vE "^(Last metadata expiration|Available Upgrades)" | grep -q .'
-  args:
-    warn: false
-  changed_when: result.rc == 0
-  failed_when: false
-  notify: update packages
-  register: result
-  when: ansible_os_family == 'RedHat'
-
-- name: trigger openbsd package updates
-  command: 'true'
-  delegate_to: localhost
-  changed_when: true
-  notify: update packages
-  when: ansible_os_family == 'OpenBSD'
+- name: add packages to custom removal list
+  include_role:
+    name: utilities
+    tasks_from: _custom_remove_packages.yml
+  with_items: '{{ system_custom_remove_packages | default([]) }}'
+  tags:
+    - 'packages'
+    - 'removepackages'
 
 - name: install custom files
-  include_tasks: _custom_files.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_files.yml
   with_items: '{{ system_custom_files | default([]) }}'
-  tags: 'customfiles'
+  tags:
+    - 'configs'
+    - 'customfiles'
 
 - name: install custom includes
-  include_tasks: _custom_includes.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_includes.yml
   with_items: '{{ system_custom_includes | default([]) }}'
-  tags: 'customincludes'
+  tags:
+    - 'configs'
+    - 'customincludes'
 
 - name: install custom settings
-  include_tasks: _custom_settings.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_settings.yml
   with_items: '{{ system_custom_settings | default([]) }}'
-  tags: 'customsettings'
+  tags:
+    - 'configs'
+    - 'customsettings'
 
 - name: add custom repos
-  include_tasks: _custom_repos.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_repos.yml
   with_items: '{{ system_custom_repos | default([]) }}'
   tags: 'customrepos'
 
 - name: add users to groups
-  include_tasks: _custom_groups.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_groups.yml
   with_items: '{{ system_custom_groups | default([]) }}'
   tags: 'customgroups'
 
 - name: enable/start services
-  include_tasks: _custom_services.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_services.yml
   with_items: '{{ system_custom_services | default([]) }}'
   tags: 'customservices'
 
 - name: install custom deb files
-  include_tasks: _custom_deb_files.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_deb_files.yml
   with_items: '{{ system_custom_deb_files | default([]) }}'
   tags: 'debfiles'
 
@@ -144,6 +153,7 @@
   with_items: '{{ custom_ssl_certs | default([]) }}'
   tags: 'cacert'
 
-- name: 'include_tasks : {{ ansible_system }}.yml'
-  include_tasks: '{{ ansible_system }}.yml'
-  tags: 'always'
+- name: install custom dns search domain
+  include_tasks: _dns_search_domain.yml
+  tags: 'dnssearch'
+  when: dns_search_domain is defined

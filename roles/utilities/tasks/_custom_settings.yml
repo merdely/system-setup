@@ -4,11 +4,14 @@
     path: '{{ item.dest_d | dirname }}'
   become: '{{ item.become | default(omit) }}'
   register: dest_d
+  tags:
+    - 'configs'
+    - 'customsettings'
   when:
     - item.dest_d is defined
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
-  tags: 'customsettings'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
 - name: '_custom_settings : add "{{ item.line }}" in {{ item.dest_d }}'
   copy:
@@ -19,13 +22,16 @@
     mode: '{{ item.mode | default(omit) }}'
     backup: '{{ item.backup | default(omit) }}'
   become: '{{ item.become | default(omit) }}'
-  notify: restart sshd
+  notify: '{{ custom_handlers | default([]) }}'
+  tags:
+    - 'configs'
+    - 'customsettings'
   when:
     - item.dest_d is defined
     - dest_d.stat.exists and dest_d.stat.isdir
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
-  tags: 'customsettings'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
 - name: '_custom_settings : add "{{ item.line }}" in {{ item.dest_f }}'
   lineinfile:
@@ -41,9 +47,12 @@
     state: '{{ item.state | default(omit) }}'
     backup: '{{ item.backup | default(omit) }}'
   become: '{{ item.become | default(omit) }}'
-  notify: restart sshd
+  notify: '{{ custom_handlers | default([]) }}'
+  tags:
+    - 'configs'
+    - 'customsettings'
   when:
     - item.dest_d is not defined or not dest_d.stat.exists or not dest_d.stat.isdir
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
-  tags: 'customsettings'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'

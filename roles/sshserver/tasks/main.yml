@@ -31,16 +31,34 @@
   tags: 'sshkeys'
 
 - name: install custom files
-  include_tasks: _custom_files.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_files.yml
   with_items: '{{ sshserver_custom_files | default([]) }}'
-  tags: 'customfiles'
+  tags:
+    - 'configs'
+    - 'customfiles'
+  vars:
+    - custom_handlers: ['restart sshd']
 
 - name: install custom includes
-  include_tasks: _custom_includes.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_includes.yml
   with_items: '{{ sshserver_custom_includes | default([]) }}'
-  tags: 'customincludes'
+  tags:
+    - 'configs'
+    - 'customincludes'
+  vars:
+    - custom_handlers: ['restart sshd']
 
 - name: install custom settings
-  include_tasks: _custom_settings.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_settings.yml
   with_items: '{{ sshserver_custom_settings | default([]) }}'
-  tags: 'customsettings'
+  tags:
+    - 'configs'
+    - 'customsettings'
+  vars:
+    - custom_handlers: ['restart sshd']

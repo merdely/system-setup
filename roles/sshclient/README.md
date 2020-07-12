@@ -31,14 +31,14 @@ The format of the vars/main.yml vault file is:
           really private key stuff goes here!
           -----END OPENSSH PRIVATE KEY-----
         public_key: |
-          ssh-ed25519 AAAAC3NzaCpubkeystuff mike@erdelynet.com
+          ssh-ed25519 AAAAC3NzaCpubkeystuff user@host
       - file: id_rsa
         private_key: |
           -----BEGIN OPENSSH PRIVATE KEY-----
           other private key stuff goes here!!
           -----END OPENSSH PRIVATE KEY-----
         public_key: |
-          ssh-rsa AAAAB3NzaC1yc2pubkeystuff mike@erdelynet.com
+          ssh-rsa AAAAB3NzaC1yc2pubkeystuff user@host
 
 If user_ssh_keys is not defined, no private/public SSH keys will be copied.
 If both file_sources and web_sources are defined, file_sources takes precedence.

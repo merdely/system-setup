@@ -1,0 +1,11 @@
+---
+- name: '_custom_remove_packages: add {{ item.package }} to package removal list'
+  set_fact:
+    packages_to_remove: '{{ packages_to_remove | default([]) | union([item.package]) }}'
+  changed_when: true
+  notify: '{{ ["print packages_to_remove", "remove packages" ] | union(custom_handlers|default([]) }}'
+  tags: 'packages'
+  when:
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'

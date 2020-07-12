@@ -23,19 +23,31 @@
   tags: 'sshkeys'
 
 - name: install custom files
-  include_tasks: _custom_files.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_files.yml
   with_items: '{{ sshclient_custom_files | default([]) }}'
-  tags: 'customfiles'
+  tags:
+    - 'configs'
+    - 'customfiles'
 
 - name: install custom includes
-  include_tasks: _custom_includes.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_includes.yml
   with_items: '{{ sshclient_custom_includes | default([]) }}'
-  tags: 'customincludes'
+  tags:
+    - 'configs'
+    - 'customincludes'
 
 - name: install custom settings
-  include_tasks: _custom_settings.yml
+  include_role:
+    name: utilities
+    tasks_from: _custom_settings.yml
   with_items: '{{ sshclient_custom_settings | default([]) }}'
-  tags: 'customsettings'
+  tags:
+    - 'configs'
+    - 'customsettings'
 
 - name: get ssh localhost host public key from /etc/ssh
   slurp:

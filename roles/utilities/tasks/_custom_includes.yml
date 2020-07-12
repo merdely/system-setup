@@ -1,5 +1,5 @@
 ---
-- name: '_custom_includes : add custom lines to custom files'
+- name: '_custom_includes : add "{{ item.line }}" to "{{ item.path }}"'
   lineinfile:
     path: '{{ item.path | mandatory }}'
     line: '{{ item.line | mandatory }}'
@@ -15,7 +15,10 @@
   become: '{{ item.become | default(omit) }}'
   failed_when: result.rc is defined and ( result.rc not in [ 0, 257 ] )
   register: result
-  tags: 'customfiles'
+  tags:
+    - 'configs'
+    - 'customfiles'
   when:
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'

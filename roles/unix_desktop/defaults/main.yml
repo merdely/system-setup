@@ -4,6 +4,29 @@
 #
 ---
 ## Custom configuration options
+## *_custom_add_packages is a list of packages to add to the packages_to_install list
+# - package: package name to install
+# - os_family: a list of ansible_os_family values for which this item pertains
+# - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
+#
+# desktop_custom_add_packages:
+#   - {package: 'firefox', exclude_hosts: ['testvm'], os_family: ['OpenBSD']}
+desktop_custom_add_packages: []
+
+## *_custom_remove_packages is a list of packages to add to the packages_to_remove list
+# - package: package name to remove
+# - os_family: a list of ansible_os_family values for which this item pertains
+# - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
+#
+# desktop_custom_remove_packages:
+#   - {package: 'libreoffice-*', exclude_hosts: ['testvm'], os_family: ['Debian']}
+#   - {package: 'libreoffice', exclude_hosts: ['testvm'], os_family: ['Debian']}
+desktop_custom_remove_packages: []
+
 ## *_custom_files is a list of files that can be installed from the ansible server or a web site
 # - type: can be 'file' or 'web'
 # - src: path to file on ansible server or a URL
@@ -12,8 +35,10 @@
 # - owner/group: ownership of the destination file
 # - dirmode: the permissions on any directories created in the destination file path
 # - become: if elevated access is required to write the file
-# - os_family: a list of ansible_os_family values for which the file pertains
+# - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
 #
 # desktop_custom_files:
 #   - {type: 'web', src: 'https://yoursite.com/yourfile.txt', dest: '~/.yourfile', os_family: ['OpenBSD']}
@@ -31,8 +56,10 @@ desktop_custom_files: []
 # - create: should the file be created if it does not exist (default: false)
 # - backup: whether to make a backup of the unchanged file (default: false)
 # - become: if elevated access is required to write the file
-# - os_family: a list of ansible_os_family values for which the include pertains
+# - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
 #
 # desktop_custom_includes:
 #   - {path: '~/.profile', line: '[ -r ~/.profile.local ] && . ~/.profile.local'}
@@ -51,8 +78,10 @@ desktop_custom_includes: []
 # - dirmode: the permissions on any directories created in the destination file path
 # - backup: whether to make a backup of the unchanged file (default: false)
 # - become: if elevated access is required to write the file
-# - os_family: a list of ansible_os_family values for which the setting pertains
+# - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
 #
 # desktop_custom_settings:
 #   - {dest_d: '/etc/ssh/sshd_config.d/10-permit-root.conf', line: 'PermitRootLogin prohibit-password'}
@@ -74,8 +103,10 @@ desktop_custom_settings: []
 # - disableyumrepos: A list of repos to disable after packages are installed/updated from it
 # - packages: A list of packages to be added to the list of packages to install
 # - become: if elevated access is required to add the repos (default: true)
-# - os_family: a list of ansible_os_family values for which the repo pertains
+# - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
 #
 # desktop_custom_repos:
 #   - {name: 'google-chrome', keyurl: 'https://dl.g...', gpgkey: 'https://dl.g...', yumrepo: 'http://dl...',
@@ -87,8 +118,10 @@ desktop_custom_repos: []
 # - groups: Groups to add 'name' user to
 # - append: Append the user to the groups or overwrite user's group membership with this list (default: false)
 # - become: if elevated access is required modify groups (default: true)
-# - os_family: a list of ansible_os_family values for which the file pertains
+# - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
 #
 # desktop_custom_groups:
 #   - {name: '{{ ansible_user_id }}', groups: 'operator', os_family: ['OpenBSD']}
@@ -96,8 +129,10 @@ desktop_custom_groups: []
 
 ## *_custom_services is a list of services to enable/start
 # - name: Name of the service to enable/start
-# - os_family: a list of ansible_os_family values for which the service pertains
+# - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
 desktop_custom_services: []
 
 ## *_custom_deb_files is a list of Debian packages to install (may be a URL)
@@ -125,15 +160,6 @@ desktop_pkgs_install:
   common: []
   OpenBSD:
     - 'dbus'
-  Linux: []
-  Debian: []
-  RedHat: []
-
-## This is a sparse set of desktop packages to install.
-## Do not make changes to this file; copy the list to vars/main.yml and change there.
-desktop_packages:
-  common: []
-  OpenBSD: []
   Linux: []
   Debian: []
   RedHat: []

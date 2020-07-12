@@ -31,8 +31,9 @@ None
 ## Role Variables
 
 A custom CA certificate file can be downloaded if defined like in one of the examples below
-* file_ca_certificate: files/ca.crt
-* web_ca_certificate: 'https://ca.erdelynet.com/ca.crt'
+custom_ssl_certs:
+- {type: 'file', src: 'files/cert1.crt', dest: 'ca-cert1.crt'}
+- {type: 'web', src: 'https://yoursite.my.domain/cert2.crt', dest: 'ca-cert2.crt'}
 
 A custom search domain can be added by defining dns_search_domain like the example below
 * dns_search_domain: 'my.domain'
@@ -42,6 +43,8 @@ A way to bail on adding the dns_search_domain in RedHat (e.g. the computer is no
 
 For each role in the project, there is a set of custom variables to perform customize the system (documented in defaults/main.yml)
 
+* system_custom_add_packages
+* system_custom_remove_packages
 * system_custom_files
 * system_custom_includes
 * system_custom_settings
@@ -49,6 +52,8 @@ For each role in the project, there is a set of custom variables to perform cust
 * system_custom_groups
 * system_custom_services
 * system_custom_deb_files
+
+For packages that are required for this playbook to work, use the system_pkgs_install dict for each OS family/system.
 
 The ca_certification_dest variable contains the location for custom CA certificates in Debian & RedHat
 

@@ -14,6 +14,7 @@
             - item.keyurl is defined or item.keyserver is defined
             - 'ansible_os_family in item.os_family|default([ansible_os_family])'
             - 'inventory_hostname not in item.exclude_hosts|default([])'
+            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
         - name: '_custom_repos : add {{ item.name }} repo'
           apt_repository:
@@ -25,6 +26,7 @@
           when:
             - 'ansible_os_family in item.os_family|default([ansible_os_family])'
             - 'inventory_hostname not in item.exclude_hosts|default([])'
+            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
       when: ansible_os_family == 'Debian'
 
     - name: redhat repo management
@@ -38,6 +40,7 @@
             - item.reporpm is defined
             - 'ansible_os_family in item.os_family|default([ansible_os_family])'
             - 'inventory_hostname not in item.exclude_hosts|default([])'
+            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
         - name: '_custom_repos : add {{ item.name }} repo key'
           rpm_key:
@@ -48,6 +51,7 @@
             - item.gpgkey is defined
             - 'ansible_os_family in item.os_family|default([ansible_os_family])'
             - 'inventory_hostname not in item.exclude_hosts|default([])'
+            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
         - name: '_custom_repos : add {{ item.name }} repo'
           yum_repository:
@@ -63,6 +67,7 @@
             - item.yumrepo is defined
             - 'ansible_os_family in item.os_family|default([ansible_os_family])'
             - 'inventory_hostname not in item.exclude_hosts|default([])'
+            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
         - name: '_custom_repos | add {{ item.name }} to repos to enable list'
           set_fact:
@@ -71,6 +76,7 @@
           when:
             - 'ansible_os_family in item.os_family|default([ansible_os_family])'
             - 'inventory_hostname not in item.exclude_hosts|default([])'
+            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
         - name: '_custom_repos | add {{ item.name }} to repos to disable list'
           set_fact:
@@ -80,6 +86,7 @@
             - item.disableyumrepos is defined
             - 'ansible_os_family in item.os_family|default([ansible_os_family])'
             - 'inventory_hostname not in item.exclude_hosts|default([])'
+            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
       when: ansible_os_family == 'RedHat'
 
     - name: '_custom_repos : add {{ item.name }} packages to the list of packages to install'
@@ -91,6 +98,7 @@
         - item.packages is defined
         - 'ansible_os_family in item.os_family|default([ansible_os_family])'
         - 'inventory_hostname not in item.exclude_hosts|default([])'
+        - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
   rescue:
     - name: '_custom_repos : log that {{ item.name }} failed'
       set_fact:

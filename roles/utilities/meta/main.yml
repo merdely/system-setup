@@ -1,11 +1,11 @@
-# configfiles meta
+# utilities meta
 ---
 dependencies: []
 
 galaxy_info:
-  role_name: 'configfiles'
+  role_name: 'utilities'
   author: 'Michael Erdely'
-  description: 'This is the configfiles role'
+  description: 'This is the utilities role'
   license: 'license (MIT / BSD)'
   min_ansible_version: 2.9
   platforms:

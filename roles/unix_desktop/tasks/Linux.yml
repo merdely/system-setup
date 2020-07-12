@@ -1,15 +1,4 @@
 ---
-- name: 'linux : remove libreoffice'
-  package:
-    name:
-      - 'libreoffice-*'
-      - 'libreoffice'
-      - 'thunderbird-*'
-      - 'thunderbird'
-    state: 'absent'
-  become: true
-  tags: 'libreoffice'
-
 - block:
     - name: 'linux : get p3x-onenote downloads file'
       uri:

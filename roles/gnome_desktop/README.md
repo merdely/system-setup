@@ -50,6 +50,8 @@ New values can be added to vars/main.yml's gnome_settings{,_openbsd}_list. The b
 
 For each role in the project, there is a set of custom variables to perform customize the system (documented in defaults/main.yml)
 
+* gnome_custom_add_packages
+* gnome_custom_remove_packages
 * gnome_custom_files
 * gnome_custom_includes
 * gnome_custom_settings
@@ -57,6 +59,8 @@ For each role in the project, there is a set of custom variables to perform cust
 * gnome_custom_groups
 * gnome_custom_services
 * gnome_custom_deb_files
+
+For packages that are required for this playbook to work, use the gnome_pkgs_install dict for each OS family/system.
 
 ## Dependencies
 

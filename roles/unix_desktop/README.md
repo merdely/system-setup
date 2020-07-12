@@ -16,7 +16,6 @@ Performs basic tasks for Unix-like desktop systems:
 * Install custom Debian 'deb' files for a desktop system.  Example:
   * Discord
 * Apply custom .Xresources settings.
-* Remove libreoffice on Linux.
 * Install p3x-onenote on Linux.
 
 ## Requirements
@@ -27,6 +26,8 @@ None
 
 For each role in the project, there is a set of custom variables to perform customize the system (documented in defaults/main.yml)
 
+* desktop_custom_add_packages
+* desktop_custom_remove_packages
 * desktop_custom_files
 * desktop_custom_includes
 * desktop_custom_settings
@@ -34,6 +35,8 @@ For each role in the project, there is a set of custom variables to perform cust
 * desktop_custom_groups
 * desktop_custom_services
 * desktop_custom_deb_files
+
+For packages that are required for this playbook to work, use the desktop_pkgs_install dict for each OS family/system.
 
 ## Dependencies
 

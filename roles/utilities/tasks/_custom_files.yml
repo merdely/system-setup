@@ -11,10 +11,13 @@
     mode: '{{ item.dirmode | default(omit) }}'
     state: 'directory'
   become: '{{ item.become | default(omit) }}'
-  tags: 'customfiles'
+  tags:
+    - 'configs'
+    - 'customfiles'
   when:
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
 - name: '_custom_files : copy {{ item.src }}'
   copy:
@@ -24,11 +27,15 @@
     group: '{{ item.group | default(omit) }}'
     mode: '{{ item.mode | default(omit) }}'
   become: '{{ item.become | default(omit) }}'
-  tags: 'customfiles'
+  notify: '{{ custom_handlers | default([]) }}'
+  tags:
+    - 'configs'
+    - 'customfiles'
   when:
     - item.type == 'file'
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
 - block:
     - name: '_custom_files : download {{ item.src }}'
@@ -39,6 +46,7 @@
         group: '{{ item.group | default(omit) }}'
         mode: '{{ item.mode | default(omit) }}'
       become: '{{ item.become | default(omit) }}'
+      notify: '{{ custom_handlers | default([]) }}'
       when: item.type == "web"
   rescue:
     - name: '_custom_files : log download custom files from web sources failed'
@@ -46,7 +54,10 @@
         task_failures: '{{ task_failures | default([]) | union(["download custom files " + item.src ]) }}'
       changed_when: true
       notify: list failed tasks
-  tags: 'customfiles'
+  tags:
+    - 'configs'
+    - 'customfiles'
   when:
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'

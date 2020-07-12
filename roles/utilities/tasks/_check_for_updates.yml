@@ -1,0 +1,55 @@
+---
+- name: '_check_for_updates: determine if there are debian package updates'  # noqa 306
+  shell: 'apt-get -s upgrade | grep -qE "^[1-9][0-9]* upgraded"'
+  args:
+    warn: false
+  changed_when: result.rc == 0
+  failed_when: false
+  notify: '{{ ["update packages"] | union(package_handlers|default([])) }}'
+  register: result
+  tags:
+    - 'packages'
+    - 'updates'
+  when: ansible_os_family == 'Debian'
+
+- name: '_check_for_updates: determine if there are redhat package updates'  # noqa 306
+  shell: 'dnf list --updates | grep -vE "^(Last metadata expiration|Available Upgrades)" | grep -q .'
+  args:
+    warn: false
+  changed_when: result.rc == 0
+  failed_when: false
+  notify: '{{ ["update packages"] | union(package_handlers|default([])) }}'
+  register: result
+  tags:
+    - 'packages'
+    - 'updates'
+  when: ansible_os_family == 'RedHat'
+
+- block:
+    - name: '_check_for_updates : check for openbsd system patches'
+      command: 'syspatch -c'
+      register: result
+      become: true
+      changed_when: result.stdout != ""  # noqa 602
+      notify: '{{ ["install system patches"] | union(syspatch_handlers|default([])) }}'
+  rescue:
+    - name: '_check_for_updates : log that syspatch -c failed'
+      set_fact:
+        task_failures: '{{ task_failures | default([]) | union(["syspatch -c"]) }}'
+      changed_when: true
+      notify: list failed tasks
+  tags:
+    - 'packages'
+    - 'syspatch'
+    - 'updates'
+  when: ansible_os_family == 'OpenBSD'
+
+- name: '_check_for_updates: trigger openbsd package updates'
+  command: 'true'
+  delegate_to: localhost
+  changed_when: true
+  notify: '{{ ["update packages"] | union(package_handlers|default([])) }}'
+  tags:
+    - 'packages'
+    - 'updates'
+  when: ansible_os_family == 'OpenBSD'

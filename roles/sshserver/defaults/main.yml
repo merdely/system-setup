@@ -12,8 +12,10 @@
 # - owner/group: ownership of the destination file
 # - dirmode: the permissions on any directories created in the destination file path
 # - become: if elevated access is required to write the file
-# - os_family: a list of ansible_os_family values for which the file pertains
+# - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
 #
 # desktop_custom_files:
 #   - {type: 'web', src: 'https://yoursite.com/yourfile.txt', dest: '~/.yourfile', os_family: ['OpenBSD']}
@@ -31,8 +33,10 @@ sshserver_custom_files: []
 # - create: should the file be created if it does not exist (default: false)
 # - backup: whether to make a backup of the unchanged file (default: false)
 # - become: if elevated access is required to write the file
-# - os_family: a list of ansible_os_family values for which the include pertains
+# - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
 #
 # desktop_custom_includes:
 #   - {path: '~/.profile', line: '[ -r ~/.profile.local ] && . ~/.profile.local'}
@@ -51,8 +55,10 @@ sshserver_custom_includes: []
 # - dirmode: the permissions on any directories created in the destination file path
 # - backup: whether to make a backup of the unchanged file (default: false)
 # - become: if elevated access is required to write the file
-# - os_family: a list of ansible_os_family values for which the setting pertains
+# - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
+# - include_hosts: a list of inventory_hostname values for which this item should be included
+#   (if defined, other hosts will be skipped)
 #
 # desktop_custom_settings:
 #   - {dest_d: '/etc/ssh/sshd_config.d/10-permit-root.conf', line: 'PermitRootLogin prohibit-password'}
