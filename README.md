@@ -22,7 +22,7 @@ Go through the $role/default/main.yml files and create $role/vars/main.yml files
 
 ### Preparing playbooks
 
-Either edit laptop-setup.yml or create a similar playbook.
+Either edit laptop-setup.yml/server-setup.yml or create a similar playbook.
 
 ### Running playbooks
 
@@ -34,11 +34,6 @@ Run the ansible-playbook(1) command with the laptop-setup.yml or playbook create
 
 This role stores become passwords in a vault allowing the user enter one vault password and become root with other passwords stored in the vault.
 This role has no tasks or handlers.
-
-### configfiles
-
-This role installs my config files on my systems.
-The config files are stored in lists in vars/main.yml
 
 ### sshclient
 
