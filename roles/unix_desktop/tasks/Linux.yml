@@ -80,3 +80,4 @@
       changed_when: true
       notify: list failed tasks
   tags: 'onenote'
+  when: install_onenote_linux is defined

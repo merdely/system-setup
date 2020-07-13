@@ -124,7 +124,8 @@
   include_role:
     name: utilities
     tasks_from: _custom_repos.yml
-  with_items: '{{ system_custom_repos | default([]) }}'
+  loop: '{{ system_custom_repos | default([]) }}'
+  loop_control: {loop_var: 'repo_item'}
   tags: 'customrepos'
 
 - name: add users to groups

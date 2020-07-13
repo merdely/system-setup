@@ -3,6 +3,47 @@
 - include_role: name=handlers
   when: handlers_role_imported is not defined
 
+- name: 'ensure {{ item }} exists'
+  file:
+    path: '{{ item }}'
+    state: 'directory'
+    mode: '0755'
+  with_items:
+    - '~/bin'
+    - '~/.config/autostart'
+  tags:
+    - 'autostarts'
+    - 'gse'
+    - 'gnome_settings'
+
+- name: create script to save dbus address info
+  copy:
+    content: |
+      #!/bin/sh
+      echo "DISPLAY=$DISPLAY DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" > ~/.cache/.dbusaddress
+    dest: '~/bin/save_dbus_address_info'
+    mode: '0755'
+  tags:
+    - 'gse'
+    - 'gnome_settings'
+
+- name: create autostart file for save_dbus_address_info
+  copy:
+    content: |
+      [Desktop Entry]
+      Name=save_dbus_address_info
+      Comment=Save DBUS Address Info
+      Icon=gnome-monitor
+      Exec={{ '~' | expanduser }}/bin/save_dbus_address_info
+      Terminal=false
+      Type=Application
+      NoDisplay=true
+      X-GNOME-Autostart-enabled=true
+    dest: '~/.config/autostart/save_dbus_address_info.desktop'
+  tags:
+    - 'gse'
+    - 'gnome_settings'
+
 - name: print gnome packages needed for installation
   debug:
     msg: |
@@ -93,7 +134,8 @@
   include_role:
     name: utilities
     tasks_from: _custom_repos.yml
-  with_items: '{{ gnome_custom_repos | default([]) }}'
+  loop: '{{ gnome_custom_repos | default([]) }}'
+  loop_control: {loop_var: 'repo_item'}
   tags: 'customrepos'
 
 - name: add users to groups
@@ -117,19 +159,6 @@
   with_items: '{{ gnome_custom_deb_files | default([]) }}'
   tags: 'debfiles'
 
-- name: 'ensure {{ item }} exists'
-  file:
-    path: '{{ item }}'
-    state: 'directory'
-    mode: '0755'
-  with_items:
-    - '~/bin'
-    - '~/.config/autostart'
-  tags:
-    - 'autostarts'
-    - 'gse'
-    - 'gnome_settings'
-
 - name: create autostart files for programs
   copy:
     content: |
@@ -146,34 +175,6 @@
   with_items: "{{ autostart_files }}"
   tags: 'autostarts'
   when: 'ansible_os_family in item.os_family|default([ansible_os_family])'
-
-- name: create script to save dbus address info
-  copy:
-    content: |
-      #!/bin/sh
-      echo "DISPLAY=$DISPLAY DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" > ~/.cache/.dbusaddress
-    dest: '~/bin/save_dbus_address_info'
-    mode: '0755'
-  tags:
-    - 'gse'
-    - 'gnome_settings'
-
-- name: create autostart file for save_dbus_address_info
-  copy:
-    content: |
-      [Desktop Entry]
-      Name=save_dbus_address_info
-      Comment=Save DBUS Address Info
-      Icon=gnome-monitor
-      Exec={{ '~' | expanduser }}/bin/save_dbus_address_info
-      Terminal=false
-      Type=Application
-      NoDisplay=true
-      X-GNOME-Autostart-enabled=true
-    dest: '~/.config/autostart/save_dbus_address_info.desktop'
-  tags:
-    - 'gse'
-    - 'gnome_settings'
 
 - name: determine if user is logged into gnome
   command: 'pgrep -u {{ ansible_user_id }} -lf gnome-session-binary'

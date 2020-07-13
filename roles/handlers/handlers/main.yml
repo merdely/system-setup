@@ -285,6 +285,13 @@
       changed_when: true
       notify: list failed tasks
 
+- name: run package add post commands
+  command: '{{ item }}'
+  args:
+    warn: false
+  with_items: '{{ packages_post_commands | default([]) }}'
+  become: true
+
 - name: remove unneeded apt package depencencies
   apt:
     autoremove: true
@@ -309,7 +316,7 @@
   become: true
   when:
     - ansible_os_family == 'RedHat'
-    - '"qemu-kvm" in packages_to_install'
+    - '"libvirt-client" in packages_to_install'
 
 - name: add user to groups for virtualization
   user:
@@ -319,7 +326,7 @@
   become: true
   when:
     - ansible_os_family == 'RedHat'
-    - '"qemu-kvm" in packages_to_install'
+    - '"libvirt-client" in packages_to_install'
 
 - name: ensure ntp is enabled and started
   service:

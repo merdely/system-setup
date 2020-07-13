@@ -15,13 +15,16 @@
 ## Custom configuration options
 ## *_custom_add_packages is a list of packages to add to the packages_to_install list
 # - package: package name to install
+# - post_commands: a list of commands to run after the package is installed; run as root
+#   to run as a different user, have a command like: 'sudo -u {{ ansible_user_id }} command'
 # - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
 # - include_hosts: a list of inventory_hostname values for which this item should be included
 #   (if defined, other hosts will be skipped)
 #
 # desktop_custom_add_packages:
-#   - {package: 'firefox', exclude_hosts: ['testvm'], os_family: ['OpenBSD']}
+#   - {package: 'firefox', post_commands: ['touch /etc/firefox.txt'], exclude_hosts: ['testvm'],
+#      os_family: ['OpenBSD']}
 system_custom_add_packages: []
 
 ## *_custom_remove_packages is a list of packages to add to the packages_to_remove list
@@ -111,6 +114,7 @@ system_custom_settings: []
 # - enableyumrepos: A list of repos to enable before packages are installed/updated from it
 # - disableyumrepos: A list of repos to disable after packages are installed/updated from it
 # - packages: A list of packages to be added to the list of packages to install
+#   Requires the form: [{package: 'packagename'}, {package: 'package2name'}]
 # - become: if elevated access is required to add the repos (default: true)
 # - os_family: a list of ansible_os_family values for which this item pertains
 # - exclude_hosts: a list of inventory_hostname values for which this item should be skipped
@@ -119,7 +123,7 @@ system_custom_settings: []
 #
 # desktop_custom_repos:
 #   - {name: 'google-chrome', keyurl: 'https://dl.g...', gpgkey: 'https://dl.g...', yumrepo: 'http://dl...',
-#      filename: 'google-chrome', packages: ['google-chrome-stable']}
+#      filename: 'google-chrome', packages: [{package: 'google-chrome-stable'}]}
 system_custom_repos: []
 
 ## *_custom_groups is a list of groups to add a user to

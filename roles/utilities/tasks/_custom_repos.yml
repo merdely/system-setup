@@ -1,108 +1,133 @@
+# Note: Include the _custom_repos.yml tasks with loop_control setting the loop_var to repo_item
+# This is necessary because _custom_repos.yml includes _custom_add_packages.yml in a loop and
+# the loop variables would conflict otherwise.
+#
+# - name: add custom repos
+#   include_role:
+#     name: utilities
+#     tasks_from: _custom_repos.yml
+#   loop: '{{ desktop_custom_repos | default([]) }}'
+#   loop_control: {loop_var: 'repo_item'}
+#   tags: 'customrepos'
 ---
+- name: bail if repo_item is not defined
+  fail:
+    msg: 'When importing utilities/tasks/_custom_repos.yml, set loop_control: loop_var=repo_item'
+  tags:
+    - 'packages'
+    - 'repos'
+    - 'addpackages'
+  when: repo_item is not defined
+
 - block:
     - name: debian repo management
       block:
-        - name: '_custom_repos : add {{ item.name }} repo key'
+        - name: '_custom_repos : add {{ repo_item.name }} repo key'
           apt_key:
-            url: '{{ item.keyurl | default(omit) }}'
-            keyserver: '{{ item.keyserver | default(omit) }}'
-            id: '{{ item.keyid | default(omit) }}'
+            url: '{{ repo_item.keyurl | default(omit) }}'
+            keyserver: '{{ repo_item.keyserver | default(omit) }}'
+            id: '{{ repo_item.keyid | default(omit) }}'
             state: 'present'
-          become: '{{ item.become | default(true) }}'
+          become: '{{ repo_item.become | default(true) }}'
           when:
             - ansible_os_family == 'Debian'
-            - item.keyurl is defined or item.keyserver is defined
-            - 'ansible_os_family in item.os_family|default([ansible_os_family])'
-            - 'inventory_hostname not in item.exclude_hosts|default([])'
-            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+            - repo_item.keyurl is defined or repo_item.keyserver is defined
+            - 'ansible_os_family in repo_item.os_family|default([ansible_os_family])'
+            - 'inventory_hostname not in repo_item.exclude_hosts|default([])'
+            - 'inventory_hostname in repo_item.include_hosts|default([inventory_hostname])'
 
-        - name: '_custom_repos : add {{ item.name }} repo'
+        - name: '_custom_repos : add {{ repo_item.name }} repo'
           apt_repository:
-            repo: '{{ item.debrepo | regex_replace("__X86_64__", "amd64") | regex_replace("__AARCH64__", "arm64") }}'
-            filename: '{{ item.filename | default(omit) }}'
-            codename: '{{ item.codename | default(omit) }}'
-            update_cache: '{{ item.update_cache | default(true) }}'
-          become: '{{ item.become | default(true) }}'
+            repo: '{{ repo_item.debrepo | regex_replace("__X86_64__", "amd64") |
+                   regex_replace("__AARCH64__", "arm64") }}'
+            filename: '{{ repo_item.filename | default(omit) }}'
+            codename: '{{ repo_item.codename | default(omit) }}'
+            update_cache: '{{ repo_item.update_cache | default(true) }}'
+          become: '{{ repo_item.become | default(true) }}'
           when:
-            - 'ansible_os_family in item.os_family|default([ansible_os_family])'
-            - 'inventory_hostname not in item.exclude_hosts|default([])'
-            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+            - 'ansible_os_family in repo_item.os_family|default([ansible_os_family])'
+            - 'inventory_hostname not in repo_item.exclude_hosts|default([])'
+            - 'inventory_hostname in repo_item.include_hosts|default([inventory_hostname])'
       when: ansible_os_family == 'Debian'
 
     - name: redhat repo management
       block:
-        - name: '_custom_repos : add {{ item.name }} repo rpm'
+        - name: '_custom_repos : add {{ repo_item.name }} repo rpm'
           package:
-            name: '{{ item.reporpm }}'
+            name: '{{ repo_item.reporpm }}'
             state: 'present'
-          become: '{{ item.become | default(true) }}'
+          become: '{{ repo_item.become | default(true) }}'
           when:
-            - item.reporpm is defined
-            - 'ansible_os_family in item.os_family|default([ansible_os_family])'
-            - 'inventory_hostname not in item.exclude_hosts|default([])'
-            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+            - repo_item.reporpm is defined
+            - 'ansible_os_family in repo_item.os_family|default([ansible_os_family])'
+            - 'inventory_hostname not in repo_item.exclude_hosts|default([])'
+            - 'inventory_hostname in repo_item.include_hosts|default([inventory_hostname])'
 
-        - name: '_custom_repos : add {{ item.name }} repo key'
+        - name: '_custom_repos : add {{ repo_item.name }} repo key'
           rpm_key:
-            key: '{{ item.gpgkey }}'
+            key: '{{ repo_item.gpgkey }}'
             state: 'present'
-          become: '{{ item.become | default(true) }}'
+          become: '{{ repo_item.become | default(true) }}'
           when:
-            - item.gpgkey is defined
-            - 'ansible_os_family in item.os_family|default([ansible_os_family])'
-            - 'inventory_hostname not in item.exclude_hosts|default([])'
-            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+            - repo_item.gpgkey is defined
+            - 'ansible_os_family in repo_item.os_family|default([ansible_os_family])'
+            - 'inventory_hostname not in repo_item.exclude_hosts|default([])'
+            - 'inventory_hostname in repo_item.include_hosts|default([inventory_hostname])'
 
-        - name: '_custom_repos : add {{ item.name }} repo'
+        - name: '_custom_repos : add {{ repo_item.name }} repo'
           yum_repository:
-            name: '{{ item.filename | mandatory }}'
-            description: '{{ item.name }} repo'
-            baseurl: '{{ item.yumrepo }}'
-            gpgkey: '{{ item.gpgkey }}'
-            gpgcheck: '{{ item.gpgcheck | default(true) }}'
-            metadata_expire: '{{ item.metadata_expire | default(omit) }}'
-            enabled: '{{ item.enabled | default(true) }}'
-          become: '{{ item.become | default(true) }}'
+            name: '{{ repo_item.filename | mandatory }}'
+            description: '{{ repo_item.name }} repo'
+            baseurl: '{{ repo_item.yumrepo }}'
+            gpgkey: '{{ repo_item.gpgkey }}'
+            gpgcheck: '{{ repo_item.gpgcheck | default(true) }}'
+            metadata_expire: '{{ repo_item.metadata_expire | default(omit) }}'
+            enabled: '{{ repo_item.enabled | default(true) }}'
+          become: '{{ repo_item.become | default(true) }}'
           when:
-            - item.yumrepo is defined
-            - 'ansible_os_family in item.os_family|default([ansible_os_family])'
-            - 'inventory_hostname not in item.exclude_hosts|default([])'
-            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+            - repo_item.yumrepo is defined
+            - 'ansible_os_family in repo_item.os_family|default([ansible_os_family])'
+            - 'inventory_hostname not in repo_item.exclude_hosts|default([])'
+            - 'inventory_hostname in repo_item.include_hosts|default([inventory_hostname])'
 
-        - name: '_custom_repos | add {{ item.name }} to repos to enable list'
+        - name: '_custom_repos | add {{ repo_item.name }} to repos to enable list'
           set_fact:
-            repos_to_enable: '{{ repos_to_enable | default([]) | union(item.enableyumrepos | default([item.name])) }}'
+            repos_to_enable: >
+              {{ repos_to_enable | default([]) | union(repo_item.enableyumrepos | default([repo_item.name])) }}
           notify: enable rpm repos
           when:
-            - 'ansible_os_family in item.os_family|default([ansible_os_family])'
-            - 'inventory_hostname not in item.exclude_hosts|default([])'
-            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+            - 'ansible_os_family in repo_item.os_family|default([ansible_os_family])'
+            - 'inventory_hostname not in repo_item.exclude_hosts|default([])'
+            - 'inventory_hostname in repo_item.include_hosts|default([inventory_hostname])'
 
-        - name: '_custom_repos | add {{ item.name }} to repos to disable list'
+        - name: '_custom_repos | add {{ repo_item.name }} to repos to disable list'
           set_fact:
-            repos_to_disable: '{{ repos_to_disable | default([]) | union(item.disableyumrepos) }}'
+            repos_to_disable: '{{ repos_to_disable | default([]) | union(repo_item.disableyumrepos) }}'
           notify: disable rpm repos
           when:
-            - item.disableyumrepos is defined
-            - 'ansible_os_family in item.os_family|default([ansible_os_family])'
-            - 'inventory_hostname not in item.exclude_hosts|default([])'
-            - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+            - repo_item.disableyumrepos is defined
+            - 'ansible_os_family in repo_item.os_family|default([ansible_os_family])'
+            - 'inventory_hostname not in repo_item.exclude_hosts|default([])'
+            - 'inventory_hostname in repo_item.include_hosts|default([inventory_hostname])'
       when: ansible_os_family == 'RedHat'
 
-    - name: '_custom_repos : add {{ item.name }} packages to the list of packages to install'
-      set_fact:
-        packages_to_install: '{{ packages_to_install | default([]) | union(item.packages) }}'
-      changed_when: true
-      notify: '{{ ["update package cache"] | union(item.handlers | default([])) | union(["install packages"]) }}'
+    - name: '_custom_repos: add {{ repo_item.name }} packages to custom install list'
+      include_role:
+        name: utilities
+        tasks_from: _custom_add_packages.yml
+      with_items: '{{ repo_item.packages | default([]) }}'
       when:
-        - item.packages is defined
-        - 'ansible_os_family in item.os_family|default([ansible_os_family])'
-        - 'inventory_hostname not in item.exclude_hosts|default([])'
-        - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+        - 'ansible_os_family in repo_item.os_family|default([ansible_os_family])'
+        - 'inventory_hostname not in repo_item.exclude_hosts|default([])'
+        - 'inventory_hostname in repo_item.include_hosts|default([inventory_hostname])'
   rescue:
-    - name: '_custom_repos : log that {{ item.name }} failed'
+    - name: '_custom_repos : log that {{ repo_item.name }} failed'
       set_fact:
-        task_failures: '{{ task_failures | default([]) | union(["add " + item.name + " repo"]) }}'
+        task_failures: '{{ task_failures | default([]) | union(["add " + repo_item.name + " repo"]) }}'
       changed_when: true
       notify: list failed tasks
+  tags:
+    - 'packages'
+    - 'repos'
+    - 'addpackages'
   when: ansible_os_family == 'Debian' or ansible_os_family == 'RedHat'

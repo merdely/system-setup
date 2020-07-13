@@ -10,6 +10,10 @@
   changed_when: false
   register: result
   tags: 'gnome_settings'
+  when:
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
 
 - block:
     - name: 'dconf_command : set {{ item.key }} dconf setting to "{{ item.value }}"'
@@ -22,6 +26,9 @@
       notify: list failed tasks
   tags: 'gnome_settings'
   when:
-    - result.stdout|string != item.value|string
-    - item.min is not defined or result.stdout|int <= item.min|int
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+    - '"stdout" in result and result.stdout|string != item.value|string'
+    - '"stdout" in result and (item.min is not defined or result.stdout|int <= item.min|int)'
     - item.skip is not defined or item.skip|string != 'true'

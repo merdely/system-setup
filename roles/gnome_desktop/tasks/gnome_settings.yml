@@ -49,9 +49,3 @@
   include_tasks: 'dconf_command.yml'
   with_items: '{{ gnome_settings_list | default([]) | union(gnome_terminal_settings_list | default([])) }}'
   tags: 'gnome_settings'
-
-- name: 'gnome_settings : set dconf settings for openbsd'
-  include_tasks: 'dconf_command.yml'
-  with_items: '{{ gnome_settings_openbsd_list | default([]) }}'
-  tags: 'gnome_settings'
-  when: ansible_system == 'OpenBSD'

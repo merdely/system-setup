@@ -1,12 +1,63 @@
 ---
+- name: '_custom_add_packages: check if {{ item.package }} is installed on Debian'
+  shell: >
+    apt-cache policy {{ item.package }} |
+      awk 'BEGIN{err=1}$1=="Installed:"&&$2!="(none)"{err=0;exit 0}END{exit err}'
+  args:
+    warn: false
+  changed_when: false
+  failed_when: false
+  register: dresult
+  tags: 'packages'
+  when: ansible_os_family == 'Debian'
+
+- name: '_custom_add_packages: check if {{ item.package }} is installed on RedHat'
+  shell: 'rpm -qa {{ item.package }} | grep -q .'
+  args:
+    warn: false
+  changed_when: false
+  failed_when: false
+  register: rresult
+  tags: 'packages'
+  when: ansible_os_family == 'RedHat'
+
+- name: '_custom_add_packages: check if {{ item.package }} is installed on OpenBSD'
+  command: 'pkg_info -Iq inst:{{ item.package }}'
+  args:
+    warn: false
+  changed_when: false
+  failed_when: false
+  register: oresult
+  tags: 'packages'
+  when: ansible_os_family == 'OpenBSD'
+
 - name: '_custom_add_packages: add {{ item.package }} to package install list'
   set_fact:
     packages_to_install: '{{ packages_to_install | default([]) | union([item.package]) }}'
   changed_when: true
-  notify: '{{ ["update package cache", "print packages_to_install", "install packages", "set up virtualization",
-    "add user to groups for virtualization"] | union(custom_handlers | default([])) }}'
+  notify: >
+    {{ ["update package cache", "print packages_to_install", "install packages", "set up virtualization",
+    "add user to groups for virtualization"] | union(item.custom_handlers | default([])) }}
   tags: 'packages'
   when:
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
     - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+    - dresult.rc is defined and dresult.rc != 0 or
+      rresult.rc is defined and rresult.rc != 0 or
+      oresult.rc is defined and oresult.rc != 0
+
+- name: '_custom_add_packages: add {{ item.package }} post-commands to post-command handler list'
+  set_fact:
+    packages_post_commands: '{{ packages_post_commands | default([]) | union([item.post_commands]) }}'
+  changed_when: true
+  notify: run package add post commands
+  tags: 'packages'
+  when:
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'
+    - '"post_commands" in item'
+    - dresult.rc is defined and dresult.rc != 0 or
+      rresult.rc is defined and rresult.rc != 0 or
+      oresult.rc is defined and oresult.rc != 0

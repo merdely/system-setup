@@ -10,4 +10,8 @@
     key: '{{ item.path }}/{{ item.key }}'
     value: '"{{ item.value }}"'
   tags: 'gnome_settings'
-  when: ansible_system == 'Linux'
+  when:
+    - ansible_system == 'Linux'
+    - 'ansible_os_family in item.os_family|default([ansible_os_family])'
+    - 'inventory_hostname not in item.exclude_hosts|default([])'
+    - 'inventory_hostname in item.include_hosts|default([inventory_hostname])'

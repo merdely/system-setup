@@ -1,36 +1,39 @@
 ---
 - name: '_check_for_updates: determine if there are debian package updates'  # noqa 306
-  shell: 'apt-get -s upgrade | grep -qE "^[1-9][0-9]* upgraded"'
+  shell: 'apt-get -s upgrade | awk "\$2==\"upgraded,\"&&\$4==\"newly\"&&\$5==\"installed,\"{print \$1}"'
   args:
     warn: false
-  changed_when: result.rc == 0
+  changed_when: debian_updates.stdout | int > 0
   failed_when: false
   notify: '{{ ["update packages"] | union(package_handlers|default([])) }}'
-  register: result
+  register: debian_updates
   tags:
     - 'packages'
     - 'updates'
-  when: ansible_os_family == 'Debian'
+  when:
+    - debian_updates is not defined
+    - ansible_os_family == 'Debian'
 
 - name: '_check_for_updates: determine if there are redhat package updates'  # noqa 306
-  shell: 'dnf list --updates | grep -vE "^(Last metadata expiration|Available Upgrades)" | grep -q .'
+  shell: 'dnf list --updates | awk "BEGIN{i=-1}/^Available Upgrades/{i=0;next}i>=0{i++}END{print i}"'
   args:
     warn: false
-  changed_when: result.rc == 0
-  failed_when: false
+  changed_when: redhat_updates.stdout | int > 0
   notify: '{{ ["update packages"] | union(package_handlers|default([])) }}'
-  register: result
+  register: redhat_updates
   tags:
     - 'packages'
     - 'updates'
-  when: ansible_os_family == 'RedHat'
+  when:
+    - redhat_updates is not defined
+    - ansible_os_family == 'RedHat'
 
 - block:
     - name: '_check_for_updates : check for openbsd system patches'
       command: 'syspatch -c'
-      register: result
+      register: syspatch_needed
       become: true
-      changed_when: result.stdout != ""  # noqa 602
+      changed_when: syspatch_needed.stdout != ""  # noqa 602
       notify: '{{ ["install system patches"] | union(syspatch_handlers|default([])) }}'
   rescue:
     - name: '_check_for_updates : log that syspatch -c failed'
@@ -42,14 +45,31 @@
     - 'packages'
     - 'syspatch'
     - 'updates'
-  when: ansible_os_family == 'OpenBSD'
+  when:
+    - syspatch_needed is not defined
+    - ansible_os_family == 'OpenBSD'
 
-- name: '_check_for_updates: trigger openbsd package updates'
-  command: 'true'
-  delegate_to: localhost
-  changed_when: true
+- name: '_check_for_updates: determine if there are openbsd package updates'  # noqa 306
+  shell: 'pkg_add -usv | grep -c "^Adding "'
+  args:
+    warn: false
+  changed_when: openbsd_updates.stdout | int > 0
+  failed_when: false
   notify: '{{ ["update packages"] | union(package_handlers|default([])) }}'
+  register: openbsd_updates
   tags:
     - 'packages'
     - 'updates'
-  when: ansible_os_family == 'OpenBSD'
+  when:
+    - openbsd_updates is not defined
+    - ansible_os_family == 'OpenBSD'
+
+- name: '_check_for_updates: print # openbsd updates'
+  debug:
+    msg: 'openbsd updates: {{ openbsd_updates.stdout }}'
+  tags:
+    - 'packages'
+    - 'updates'
+  when:
+    - ansible_os_family == 'OpenBSD'
+    - openbsd_updates.stdout is defined

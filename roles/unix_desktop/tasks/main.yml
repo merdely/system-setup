@@ -94,7 +94,8 @@
   include_role:
     name: utilities
     tasks_from: _custom_repos.yml
-  with_items: '{{ desktop_custom_repos | default([]) }}'
+  loop: '{{ desktop_custom_repos | default([]) }}'
+  loop_control: {loop_var: 'repo_item'}
   tags: 'customrepos'
 
 - name: add users to groups
@@ -128,7 +129,9 @@
   tags: 'xresources'
 
 - include_tasks: '_install_discord_RedHat.yml'
-  when: ansible_os_family == 'RedHat'
+  when:
+    - ansible_os_family == 'RedHat'
+    - install_discord_redhat is defined
 
 - name: 'include_tasks : {{ ansible_system }}.yml'
   include_tasks: '{{ ansible_system }}.yml'
