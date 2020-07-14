@@ -64,6 +64,11 @@ sshclient_custom_includes: []
 #   - {dest_d: '/etc/ssh/sshd_config.d/10-permit-root.conf', line: 'PermitRootLogin prohibit-password'}
 sshclient_custom_settings: []
 
+## Define role behavior
+# dont_add_localhost: define this variable to skip adding the localhost host key to ~/.ssh/known_hosts
+# dont_delete_ctl_by_cron: define this variable to skip adding a cron job to delete ssh control master files on reboot
+# dont_delete_sock_by_cron: define this variable to skip adding a cron job to delete stale ssh-agent auth sock files
+
 ## IF YOU SSH KEYS ARE DEFINED IN vars/main.yml, ENCRYPT IT USING ansible-vault
 
 ## Define multiple keys: they will be put in ~/.ssh

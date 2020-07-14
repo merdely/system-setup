@@ -173,6 +173,10 @@ system_pkgs_install:
 ## A custom search domain can be added by defining dns_search_domain like the example below
 # dns_search_domain: 'my.domain'
 
+## Configure select-editor in Debian/Ubuntu
+# dont_modify_select_editor: define this variable to skip setting the default editor
+# debian_select_editor = /usr/bin/vim.basic
+
 ## A way to bail on adding the dns_search_domain in RedHat (e.g. the computer is not on its home network)
 # dns_search_exception: '[ "$dg" != "192.168.25.1" -a "$dg" != "192.168.122.1" ] && unset dg && exit'
 
