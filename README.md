@@ -1,6 +1,6 @@
 # system-setup Ansible Project
 
-This is an Ansible project to set up my systems with my preferences.
+This is an Ansible project to take a system from "new install + sshd + python" to configured with my settings and preferences.
 
 ## Getting Started
 
@@ -23,6 +23,16 @@ Go through the $role/default/main.yml files and create $role/vars/main.yml files
 ### Preparing playbooks
 
 Either edit laptop-setup.yml/server-setup.yml or create a similar playbook.
+
+### Preparing the target system
+
+While the initial goal of this project was to take a newly installed system from fresh to configured easily, this could be used on existing systems too.
+
+1. Install OS
+2. Make sure sshd is started
+3. Download SSH Public Key into ~/.ssh/authorized_keys
+4. Make sure user can run sudo to run commands as root
+5. Make sure python is installed
 
 ### Running playbooks
 
