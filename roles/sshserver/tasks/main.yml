@@ -38,6 +38,7 @@
   tags:
     - 'configs'
     - 'customfiles'
+    - 'serverconfigs'
   vars:
     - custom_handlers: ['restart sshd']
 
@@ -49,6 +50,7 @@
   tags:
     - 'configs'
     - 'customincludes'
+    - 'serverconfigs'
   vars:
     - custom_handlers: ['restart sshd']
 
@@ -60,5 +62,6 @@
   tags:
     - 'configs'
     - 'customsettings'
+    - 'serverconfigs'
   vars:
     - custom_handlers: ['restart sshd']

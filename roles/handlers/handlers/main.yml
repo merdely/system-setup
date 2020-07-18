@@ -10,7 +10,9 @@
 - name: for installed config files with 'callfrom' defined, add to the bottom of the 'callfrom' file
   debug:
     var: user_config_files_results
-  tags: '[configs]'
+  tags:
+    - 'clientconfigs'
+    - 'configs'
 
 - block:
     - name: update apt cache

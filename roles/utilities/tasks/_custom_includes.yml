@@ -16,8 +16,10 @@
   failed_when: result.rc is defined and ( result.rc not in [ 0, 257 ] )
   register: result
   tags:
+    - 'clientconfigs'
     - 'configs'
     - 'customfiles'
+    - 'serverconfigs'
   when:
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'

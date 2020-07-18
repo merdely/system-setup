@@ -5,8 +5,10 @@
   become: '{{ item.become | default(omit) }}'
   register: dest_d
   tags:
+    - 'clientconfigs'
     - 'configs'
     - 'customsettings'
+    - 'serverconfigs'
   when:
     - item.dest_d is defined
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
@@ -24,8 +26,10 @@
   become: '{{ item.become | default(omit) }}'
   notify: '{{ custom_handlers | default([]) }}'
   tags:
+    - 'clientconfigs'
     - 'configs'
     - 'customsettings'
+    - 'serverconfigs'
   when:
     - item.dest_d is defined
     - dest_d.stat.exists and dest_d.stat.isdir
@@ -49,8 +53,10 @@
   become: '{{ item.become | default(omit) }}'
   notify: '{{ custom_handlers | default([]) }}'
   tags:
+    - 'clientconfigs'
     - 'configs'
     - 'customsettings'
+    - 'serverconfigs'
   when:
     - item.dest_d is not defined or not dest_d.stat.exists or not dest_d.stat.isdir
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'

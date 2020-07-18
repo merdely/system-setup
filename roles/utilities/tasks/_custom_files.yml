@@ -12,8 +12,10 @@
     state: 'directory'
   become: '{{ item.become | default(omit) }}'
   tags:
+    - 'clientconfigs'
     - 'configs'
     - 'customfiles'
+    - 'serverconfigs'
   when:
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'
@@ -29,8 +31,10 @@
   become: '{{ item.become | default(omit) }}'
   notify: '{{ custom_handlers | default([]) }}'
   tags:
+    - 'clientconfigs'
     - 'configs'
     - 'customfiles'
+    - 'serverconfigs'
   when:
     - item.type == 'file'
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
@@ -55,8 +59,10 @@
       changed_when: true
       notify: list failed tasks
   tags:
+    - 'clientconfigs'
     - 'configs'
     - 'customfiles'
+    - 'serverconfigs'
   when:
     - 'ansible_os_family in item.os_family|default([ansible_os_family])'
     - 'inventory_hostname not in item.exclude_hosts|default([])'

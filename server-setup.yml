@@ -11,18 +11,18 @@
 # The first time this is run, the system probably has newly created SSH Host Keys.
 # If you're using the 'sshserver' role's capability to install SSH Host Keys,
 # on the Ansible system, run:
-#  ANSIBLE_SSH_ARGS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
-#     ansible-playbook server-setup.yml -e target=my_server --ask-vault-pass
+#  ANSIBLE_SSH_ARGS="-o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+#     ansible-playbook server-setup.yml --ask-vault-pass -e target=my_server
 #
 # Once the SSH Host Keys have been installed or if you are going to install the new keys
 # on the Ansible system, run:
-#  ansible-playbook server-setup.yml -e target=my_server --ask-vault-pass
+#  ansible-playbook server-setup.yml --ask-vault-pass -e target=my_server
 #
 # To keep configuration files up to date, run:
-#  ansible-playbook server-setup.yml -e target=my_server --ask-vault-pass -t configs
+#  ansible-playbook server-setup.yml --ask-vault-pass -e target=my_server -t configs
 #
 # To install system/package updates, run:
-#  ansible-playbook server-setup.yml -e target=my_server --ask-vault-pass -t updates
+#  ansible-playbook server-setup.yml --ask-vault-pass -e target=my_server -t updates
 
 ---
 - hosts: "{{ target | default('localhost') }}"
