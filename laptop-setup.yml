@@ -20,6 +20,10 @@
 #
 # To keep configuration files up to date, run:
 #  ansible-playbook laptop-setup.yml --ask-vault-pass -e target=my_laptop -t configs
+# or
+#  ansible-playbook laptop-setup.yml --ask-vault-pass -e target=my_laptop -t serverconfigs
+# or
+#  ansible-playbook laptop-setup.yml --ask-vault-pass -e target=my_laptop -t userconfigs
 #
 # To install system/package updates, run:
 #  ansible-playbook laptop-setup.yml --ask-vault-pass -e target=my_laptop -t updates

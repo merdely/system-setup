@@ -11,8 +11,13 @@
   debug:
     var: user_config_files_results
   tags:
-    - 'clientconfigs'
     - 'configs'
+    - 'userconfigs'
+
+- name: set hostname
+  shell: >
+    hostname $(cat {{ (ansible_system == "OpenBSD") | ternary("/etc/myname", "/etc/hostname") }})
+  become: true
 
 - block:
     - name: update apt cache

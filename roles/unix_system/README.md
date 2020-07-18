@@ -28,6 +28,14 @@ Performs basic tasks for Unix-like systems:
 
 None
 
+## Host Variables
+
+To set an FQDN for the system, define a host variable for the system "fqdn=system.domain.name"
+This can be set in the inventory or inventory host_vars.
+To set it in the inventory:
+    [group]
+    system fqdn=system.domain.name
+
 ## Role Variables
 
 A custom CA certificate file can be downloaded if defined like in one of the examples below

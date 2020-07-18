@@ -20,6 +20,10 @@
 #
 # To keep configuration files up to date, run:
 #  ansible-playbook server-setup.yml --ask-vault-pass -e target=my_server -t configs
+# or
+#  ansible-playbook server-setup.yml --ask-vault-pass -e target=my_server -t serverconfigs
+# or
+#  ansible-playbook server-setup.yml --ask-vault-pass -e target=my_server -t userconfigs
 #
 # To install system/package updates, run:
 #  ansible-playbook server-setup.yml --ask-vault-pass -e target=my_server -t updates

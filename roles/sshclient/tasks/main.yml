@@ -28,9 +28,9 @@
     tasks_from: _custom_files.yml
   with_items: '{{ sshclient_custom_files | default([]) }}'
   tags:
-    - 'clientconfigs'
     - 'configs'
     - 'customfiles'
+    - 'userconfigs'
 
 - name: install custom includes
   include_role:

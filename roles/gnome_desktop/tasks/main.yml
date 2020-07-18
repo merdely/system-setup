@@ -109,9 +109,9 @@
     tasks_from: _custom_files.yml
   with_items: '{{ gnome_custom_files | default([]) }}'
   tags:
-    - 'clientconfigs'
     - 'configs'
     - 'customfiles'
+    - 'userconfigs'
 
 - name: install custom includes
   include_role:
@@ -119,9 +119,9 @@
     tasks_from: _custom_includes.yml
   with_items: '{{ gnome_custom_includes | default([]) }}'
   tags:
-    - 'clientconfigs'
     - 'configs'
     - 'customincludes'
+    - 'userconfigs'
 
 - name: install custom settings
   include_role:
@@ -129,9 +129,9 @@
     tasks_from: _custom_settings.yml
   with_items: '{{ gnome_custom_settings | default([]) }}'
   tags:
-    - 'clientconfigs'
     - 'configs'
     - 'customsettings'
+    - 'userconfigs'
 
 - name: add custom repos
   include_role:
