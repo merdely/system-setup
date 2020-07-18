@@ -50,6 +50,24 @@
           changed_when: true
           notify: list failed tasks
 
+    - name: get dash as sh value
+      command: 'debconf-show dash'
+      become: true
+      changed_when: false
+      register: result
+      tags: 'nodash'
+      when: dont_modify_dash_as_sh is not defined
+
+    - name: 'set dash as sh to false'
+      shell: 'echo "dash dash/sh boolean false" | sudo debconf-set-selections -v'
+      become: true
+      changed_when: true
+      notify: 'reconfigure dash package'
+      tags: 'nodash'
+      when:
+        - result.stdout != '* dash/sh:' + ' false'
+        - dont_modify_dash_as_sh is not defined
+
     - name: set vim as the default editor on debian
       copy:
         content: |

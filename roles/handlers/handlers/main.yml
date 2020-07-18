@@ -18,6 +18,15 @@
   shell: >
     hostname $(cat {{ (ansible_system == "OpenBSD") | ternary("/etc/myname", "/etc/hostname") }})
   become: true
+  tags:
+    - 'configs'
+    - 'serverconfigs'
+
+- name: reconfigure dash package
+  command: env DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
+  become: true
+  tags: 'nodash'
+  when: ansible_os_family == 'Debian'
 
 - block:
     - name: update apt cache

@@ -63,6 +63,13 @@ For each role in the project, there is a set of custom variables to perform cust
 
 For packages that are required for this playbook to work, use the system_pkgs_install dict for each OS family/system.
 
+The playbook makes other changes to Debian/Ubuntu that can be skipped with:
+* dont_modify_dash_as_sh
+* dont_modify_select_editor
+
+By default, if the Debian selected editor is to be modified (see above), it will set it to /usr/bin/vim.basic.  Override with:
+* debian_select_editor: '/usr/bin/your_editor'
+
 The ca_certification_dest variable contains the location for custom CA certificates in Debian & RedHat
 
 ## Dependencies

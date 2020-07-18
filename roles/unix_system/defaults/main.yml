@@ -173,6 +173,9 @@ system_pkgs_install:
 ## A custom search domain can be added by defining dns_search_domain like the example below
 # dns_search_domain: 'my.domain'
 
+## Leave dash as sh
+# dont_modify_dash_as_sh: define this variable to skip setting the symlink for /bin/sh to bash
+
 ## Configure select-editor in Debian/Ubuntu
 # dont_modify_select_editor: define this variable to skip setting the default editor
 # debian_select_editor = /usr/bin/vim.basic
