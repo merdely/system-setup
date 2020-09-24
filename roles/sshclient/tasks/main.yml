@@ -80,6 +80,6 @@
   cron:
     name: 'Delete ssh auth sock links at reboot'
     special_time: 'reboot'
-    job: 'rm -f ~/.ssh/ssh-auth-sock'
+    job: 'rm -f ~/.ssh/ssh-auth-sock*'
   tags: 'cron'
   when: dont_delete_sock_by_cron is not defined
